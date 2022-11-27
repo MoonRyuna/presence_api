@@ -1,0 +1,47 @@
+{
+  "name": "cbs-simulator-nodejs",
+  "version": "1.0.0",
+  "description": "CBS Simulator BPD ***, private repository ",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --verbose",
+    "pm2": "pm2 start server.js",
+    "stop-pm2": "pm2 stop 0",
+    "start": "node server.js",
+    "sq:create": "sequelize db:create",
+    "sq:migrate": "sequelize db:migrate",
+    "sq:seed": "sequelize db:seed:all"
+  },
+  "author": "Ari Ardiansyah",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.32.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.2",
+    "ejs": "^3.1.6",
+    "express": "^4.17.3",
+    "express-session": "^1.17.2",
+    "jest": "^28.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.3",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^6.7.8",
+    "nodemon": "^2.0.20",
+    "pg": "^8.8.0",
+    "pm2": "^5.2.0",
+    "sequelize": "^6.23.0",
+    "supertest": "^6.2.3",
+    "swagger-ui-express": "^4.3.0",
+    "uuid": "^8.3.2",
+    "validatorjs": "^3.22.1",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "postman-to-openapi": "^2.7.0",
+    "sequelize-cli": "^6.5.1"
+  }
+}

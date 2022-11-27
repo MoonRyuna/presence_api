@@ -1,0 +1,31 @@
+'use strict';
+const {
+  Model
+} = require('sequelize');
+module.exports = (sequelize, DataTypes) => {
+  class office_config extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
+    static associate(models) {
+      // define association here
+    }
+  }
+  office_config.init({
+    name: DataTypes.TEXT,
+    theme: DataTypes.TEXT,
+    logo: DataTypes.TEXT,
+    latitude: DataTypes.DOUBLE,
+    longitude: DataTypes.DOUBLE,
+    radius: DataTypes.DOUBLE,
+    amount_of_annual_leave: DataTypes.INTEGER,
+    work_schedule: DataTypes.TEXT,
+    updated_by: DataTypes.BIGINT
+  }, {
+    sequelize,
+    modelName: 'office_config',
+  });
+  return office_config;
+};
