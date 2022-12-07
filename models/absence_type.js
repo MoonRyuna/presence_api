@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     deleted_by: DataTypes.BIGINT
   }, {
     sequelize,
-    modelName: 'absence_type',
+    modelName: 'absence_type'
   });
   return absence_type;
 };

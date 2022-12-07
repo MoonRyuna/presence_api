@@ -23,6 +23,18 @@ module.exports = {
       description: {
         type: Sequelize.TEXT
       },
+      late: {
+        type: Sequelize.BOOLEAN
+      },
+      late_amount: {
+        type: Sequelize.DOUBLE
+      },
+      overtime: {
+        type: Sequelize.BOOLEAN
+      },
+      overtime_amount: {
+        type: Sequelize.DOUBLE
+      },
       user_id: {
         type: Sequelize.BIGINT,
         references: {        
@@ -31,14 +43,9 @@ module.exports = {
         },
         onDelete: 'CASCADE'
       },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE
+      idle_amount: {
+        type: Sequelize.DOUBLE
       },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE
-      }
     });
   },
   async down(queryInterface, Sequelize) {

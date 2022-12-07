@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class absence extends Model {
+  class overtime extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -13,22 +13,20 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-  absence.init({
-    submission_at: DataTypes.DATE,
+  overtime.init({
+    subimission_at: DataTypes.DATE,
     submission_status: DataTypes.TEXT,
-    absence_type_id: DataTypes.BIGINT,
-    cut_annual_leave: DataTypes.BOOLEAN,
     user_id: DataTypes.BIGINT,
     attachment: DataTypes.TEXT,
-    absence_at: DataTypes.DATE,
-    approvedAt: DataTypes.DATE,
+    overtime_at: DataTypes.DATE,
+    approverdAt: DataTypes.DATE,
     approved_by: DataTypes.BIGINT,
     rejectedAt: DataTypes.DATE,
     rejected_by: DataTypes.BIGINT
   }, {
     sequelize,
-    modelName: 'absence',
+    modelName: 'overtime',
     timestamps: false
   });
-  return absence;
+  return overtime;
 };

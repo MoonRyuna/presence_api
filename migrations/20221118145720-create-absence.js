@@ -23,6 +23,9 @@ module.exports = {
         },
         onDelete: 'CASCADE'
       },
+      cut_annual_leave: {
+        type: Sequelize.BOOLEAN
+      },
       user_id: {
         type: Sequelize.BIGINT,
         allowNull: false,
@@ -61,14 +64,6 @@ module.exports = {
           key: 'id'
         },
         onDelete: 'CASCADE'
-      },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE
       }
     });
   },

@@ -19,10 +19,15 @@ module.exports = (sequelize, DataTypes) => {
     position_check_in: DataTypes.TEXT,
     position_check_out: DataTypes.TEXT,
     description: DataTypes.TEXT,
+    late: DataTypes.BOOLEAN,
+    late_amount: DataTypes.DOUBLE,
+    overtime: DataTypes.BOOLEAN,
+    overtime_amount: DataTypes.DOUBLE,
     user_id: DataTypes.BIGINT
   }, {
     sequelize,
     modelName: 'presence',
+    timestamps: false
   });
   return presence;
 };

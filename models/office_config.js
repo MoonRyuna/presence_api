@@ -22,10 +22,12 @@ module.exports = (sequelize, DataTypes) => {
     radius: DataTypes.DOUBLE,
     amount_of_annual_leave: DataTypes.INTEGER,
     work_schedule: DataTypes.TEXT,
-    updated_by: DataTypes.BIGINT
+    updated_by: DataTypes.BIGINT,
+    updatedAt: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'office_config',
+    timestamps: false
   });
   return office_config;
 };

@@ -14,6 +14,9 @@ module.exports = {
       cut_annual_leave: {
         type: Sequelize.BOOLEAN
       },
+      deleted: {
+        type: Sequelize.BOOLEAN
+      },
       created_by: {
         type: Sequelize.BIGINT,
         allowNull: false,
@@ -32,12 +35,6 @@ module.exports = {
         },
         onDelete: 'CASCADE'
       },
-      deleted: {
-        type: Sequelize.BOOLEAN
-      },
-      deletedAt: {
-        type: Sequelize.DATE
-      },
       deleted_by: {
         type: Sequelize.BIGINT,
         allowNull: false,
@@ -54,7 +51,10 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE
-      }
+      },
+      deletedAt: {
+        type: Sequelize.DATE
+      },
     });
   },
   async down(queryInterface, Sequelize) {

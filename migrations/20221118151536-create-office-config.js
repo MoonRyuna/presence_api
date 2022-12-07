@@ -1,7 +1,7 @@
 'use strict';
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('office_configs', {
+    await queryInterface.createTable('office_config', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -40,10 +40,6 @@ module.exports = {
         },
         onDelete: 'CASCADE'
       },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE
-      },
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -51,6 +47,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('office_configs');
+    await queryInterface.dropTable('office_config');
   }
 };

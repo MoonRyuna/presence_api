@@ -1,4 +1,4 @@
-const { Auth } = require("../../models")
+const { user } = require("../../models")
 const jwt = require('jsonwebtoken');
 
 class AuthController {
@@ -7,20 +7,20 @@ class AuthController {
 
     if(!username){
       return res.json({
-        "status": "96",
+        "status": false,
         "message": "username:must not be blank"
       })
     }
 
     if(!password){
       return res.json({
-        "status": "96",
+        "status": false,
         "message": "password:must not be blank"
       })
     }
 
     try {
-      let auth = await Auth.findOne({
+      let auth = await user.findOne({
         where: {
           username: username,
         }
@@ -28,14 +28,14 @@ class AuthController {
   
       if(!auth?.username){
         return res.json({
-          "status": "96",
+          "status": false,
           "message": "username:not found"
         })
       }
 
       if(password != auth.password){
         return res.json({
-          "status": "96",
+          "status": false,
           "message": "password:not match"
         })
       }
@@ -53,19 +53,21 @@ class AuthController {
         expiresIn: '24h' 
       });
       
-      await Auth.update({ token: token }, {
+      await user.update({ token: token }, {
         where: { id: auth?.id }
       })
 
       return res.json({
-        "status": "00",
+        "status": true,
         "message": "Approve",
-        "token": token
+        "data": {
+          "token": token
+        }
       })
 
     } catch (error) {
       return res.json({
-        "status": "96",
+        "status": false,
         "message": error.message
       }) 
     }

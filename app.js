@@ -13,7 +13,7 @@ const fs = require('fs')
 const AuthRouter = require("./routes/api/AuthRouter")
 
 const app = express()
-const swaggerDocument = YAML.load('collection.yaml')
+const swaggerDocument = YAML.load('./openapi/collection.yaml')
 
 //Setup Log
 const originalSend = app.response.send
@@ -53,7 +53,7 @@ app.use(express.json())
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.get('/', (req, res) => {
     res.json({
-        'message': 'welcome to api cbs simulator',
+        'message': 'welcome to presence api',
         'docs': '/docs'
     })
 })

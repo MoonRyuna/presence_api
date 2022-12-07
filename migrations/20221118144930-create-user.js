@@ -17,6 +17,9 @@ module.exports = {
       password: {
         type: Sequelize.TEXT
       },
+      token: {
+        type: Sequelize.TEXT
+      },
       email: {
         type: Sequelize.TEXT
       },
@@ -37,6 +40,9 @@ module.exports = {
       },
       profile_picture: {
         type: Sequelize.TEXT
+      },
+      device_tracker: {
+        type: Sequelize.BOOLEAN
       },
       deleted: {
         type: Sequelize.BOOLEAN
@@ -68,9 +74,6 @@ module.exports = {
         },
         onDelete: 'CASCADE'
       },
-      deletedAt: {
-        type: Sequelize.DATE
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -78,7 +81,10 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE
-      }
+      },
+      deletedAt: {
+        type: Sequelize.DATE
+      },
     });
   },
   async down(queryInterface, Sequelize) {
