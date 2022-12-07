@@ -33,6 +33,7 @@ module.exports = {
         type: Sequelize.TEXT
       },
       updated_by: {
+        allowNull: true,
         type: Sequelize.BIGINT,
         references: {        
           model: 'user',

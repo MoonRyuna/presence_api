@@ -19,7 +19,7 @@ module.exports = {
       },
       created_by: {
         type: Sequelize.BIGINT,
-        allowNull: false,
+        allowNull: true,
         references: {        
           model: 'user',
           key: 'id'
@@ -28,16 +28,16 @@ module.exports = {
       },
       updated_by: {
         type: Sequelize.BIGINT,
-        allowNull: false,
+        allowNull: true,
         references: {        
           model: 'user',
           key: 'id'
         },
         onDelete: 'CASCADE'
-      },
+      },      
       deleted_by: {
         type: Sequelize.BIGINT,
-        allowNull: false,
+        allowNull: true,
         references: {        
           model: 'user',
           key: 'id'
@@ -53,6 +53,7 @@ module.exports = {
         type: Sequelize.DATE
       },
       deletedAt: {
+        allowNull: true,
         type: Sequelize.DATE
       },
     });

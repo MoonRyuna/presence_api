@@ -46,7 +46,7 @@ module.exports = {
       },
       approved_by: {
         type: Sequelize.BIGINT,
-        allowNull: false,
+        allowNull: true,
         references: {        
           model: 'user',
           key: 'id'
@@ -58,7 +58,7 @@ module.exports = {
       },
       rejected_by: {
         type: Sequelize.BIGINT,
-        allowNull: false,
+        allowNull: true,
         references: {        
           model: 'user',
           key: 'id'

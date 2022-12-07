@@ -29,18 +29,30 @@ module.exports = {
       overtime_at: {
         type: Sequelize.DATE
       },
-      approverdAt: {
+      approvedAt: {
         type: Sequelize.DATE
       },
       approved_by: {
-        type: Sequelize.BIGINT
+        allowNull: true,
+        type: Sequelize.BIGINT,
+        references: {        
+          model: 'user',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
       },
       rejectedAt: {
         type: Sequelize.DATE
       },
       rejected_by: {
-        type: Sequelize.BIGINT
-      }
+        allowNull: true,
+        type: Sequelize.BIGINT,
+        references: {        
+          model: 'user',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
     });
   },
   async down(queryInterface, Sequelize) {

@@ -11,40 +11,40 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      this.hasMany(models.User, {
-        foreignKey: 'created_by',
-        as: 'created_users'
-      })
+      // this.hasMany(models.User, {
+      //   foreignKey: 'created_by',
+      //   as: 'created_users'
+      // })
 
-      this.belongsTo(models.User, {
-        foreignKey: 'created_by',
-        as: 'creator'
-      })
+      // this.belongsTo(models.User, {
+      //   foreignKey: 'created_by',
+      //   as: 'creator'
+      // })
 
-      this.hasMany(models.User, {
-        foreignKey: 'updated_by',
-        as: 'updated_users'
-      })
+      // this.hasMany(models.User, {
+      //   foreignKey: 'updated_by',
+      //   as: 'updated_users'
+      // })
 
-      this.belongsTo(models.User, {
-        foreignKey: 'updated_by',
-        as: 'updator'
-      })
+      // this.belongsTo(models.User, {
+      //   foreignKey: 'updated_by',
+      //   as: 'updator'
+      // })
 
-      this.hasMany(models.User, {
-        foreignKey: 'deleted_by',
-        as: 'deleted_users'
-      })
+      // this.hasMany(models.User, {
+      //   foreignKey: 'deleted_by',
+      //   as: 'deleted_users'
+      // })
 
-      this.belongsTo(models.User, {
-        foreignKey: 'deletor_by',
-        as: 'deletor'
-      })
+      // this.belongsTo(models.User, {
+      //   foreignKey: 'deletor_by',
+      //   as: 'deletor'
+      // })
 
-      this.hasMany(models.Presence, {
-        foreignKey: 'user_id',
-        as: 'presences'
-      })
+      // this.hasMany(models.Presence, {
+      //   foreignKey: 'user_id',
+      //   as: 'presences'
+      // })
     }
   }
   
