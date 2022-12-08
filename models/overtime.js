@@ -11,6 +11,18 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      this.belongsTo(models.user, {
+        foreignKey: 'user_id',
+        as: 'user'
+      })
+      this.belongsTo(models.user, {
+        foreignKey: 'approved_by',
+        as: 'approved_by'
+      })
+      this.belongsTo(models.user, {
+        foreignKey: 'rejected_by',
+        as: 'rejected_by'
+      })
     }
   }
   overtime.init({

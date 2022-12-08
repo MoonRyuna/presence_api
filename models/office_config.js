@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      this.belongsTo(models.user, {
+        foreignKey: 'updated_by',
+        as: 'updated_by'
+      })
     }
   }
   office_config.init({

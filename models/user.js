@@ -11,40 +11,18 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      // this.hasMany(models.User, {
-      //   foreignKey: 'created_by',
-      //   as: 'created_users'
-      // })
-
-      // this.belongsTo(models.User, {
-      //   foreignKey: 'created_by',
-      //   as: 'creator'
-      // })
-
-      // this.hasMany(models.User, {
-      //   foreignKey: 'updated_by',
-      //   as: 'updated_users'
-      // })
-
-      // this.belongsTo(models.User, {
-      //   foreignKey: 'updated_by',
-      //   as: 'updator'
-      // })
-
-      // this.hasMany(models.User, {
-      //   foreignKey: 'deleted_by',
-      //   as: 'deleted_users'
-      // })
-
-      // this.belongsTo(models.User, {
-      //   foreignKey: 'deletor_by',
-      //   as: 'deletor'
-      // })
-
-      // this.hasMany(models.Presence, {
-      //   foreignKey: 'user_id',
-      //   as: 'presences'
-      // })
+      this.hasMany(models.presence, {
+        foreignKey: 'user_id',
+        as: 'presences'
+      })
+      this.hasMany(models.absences, {
+        foreignKey: 'user_id',
+        as: 'absences'
+      })
+      this.hasMany(models.overtime, {
+        foreignKey: 'user_id',
+        as: 'overtimes'
+      })
     }
   }
   

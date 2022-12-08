@@ -11,6 +11,22 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      this.belongsTo(models.absence_type, {
+        foreignKey: 'absence_type_id',
+        as: 'absence_type'
+      })
+      this.belongsTo(models.user, {
+        foreignKey: 'user_id',
+        as: 'user'
+      })
+      this.belongsTo(models.user, {
+        foreignKey: 'approved_by',
+        as: 'approved_by'
+      })
+      this.belongsTo(models.user, {
+        foreignKey: 'rejected_by',
+        as: 'rejected_by'
+      })
     }
   }
   absence.init({
