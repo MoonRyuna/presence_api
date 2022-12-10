@@ -39,26 +39,26 @@ class AuthController {
     let id = req.params.id
 
     try {
-      let office_config = await office_config.findOne({
+      let officeConfig = await office_config.findOne({
         where: {
           id: id,
         }
       })
 
-      if(!office_config?.id){
+      if(!officeConfig?.id){
         return res.json({
           "status": false,
           "message": "office_config:not found"
         })
       }
 
-      let user = await user.findOne({
+      let oUser = await user.findOne({
         where: {
           id: updated_by,
         }
       })
   
-      if(!user?.username){
+      if(!oUser?.username){
         return res.json({
           "status": false,
           "message": "user:not found"
