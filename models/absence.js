@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
+      // console.log(models)
       // define association here
       this.belongsTo(models.absence_type, {
         foreignKey: 'absence_type_id',
@@ -21,11 +22,11 @@ module.exports = (sequelize, DataTypes) => {
       })
       this.belongsTo(models.user, {
         foreignKey: 'approved_by',
-        as: 'approved_by'
+        as: 'approver'
       })
       this.belongsTo(models.user, {
         foreignKey: 'rejected_by',
-        as: 'rejected_by'
+        as: 'rejecter'
       })
     }
   }
@@ -44,7 +45,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'absence',
-    timestamps: false
+    timestamps: false,
+    freezeTableName: true,
   });
   return absence;
 };

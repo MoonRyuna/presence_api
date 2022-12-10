@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'user_id',
         as: 'presences'
       })
-      this.hasMany(models.absences, {
+      this.hasMany(models.absence, {
         foreignKey: 'user_id',
         as: 'absences'
       })
@@ -46,7 +46,8 @@ module.exports = (sequelize, DataTypes) => {
     deletedAt: DataTypes.DATE,
   }, {
     sequelize,
-    modelName: 'User',
+    modelName: 'user',
+    freezeTableName: true,
   });
   return user;
 };

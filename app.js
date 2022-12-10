@@ -15,6 +15,8 @@ const AuthRouter = require("./routes/api/AuthRouter")
 const app = express()
 const swaggerDocument = YAML.load('./openapi/collection.yaml')
 
+const apiVersion = '/api/v1'
+
 //Setup Log
 const originalSend = app.response.send
 app.response.send = function sendOverWrite(body) {
@@ -51,6 +53,7 @@ app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:htt
 app.use(cors())
 app.use(express.json())
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 app.get('/', (req, res) => {
     res.json({
         'message': 'welcome to presence api',
@@ -58,7 +61,7 @@ app.get('/', (req, res) => {
     })
 })
 
-app.use(AuthRouter)
+app.use(apiVersion, AuthRouter)
 
 app.use((error, req, res, next) => {
   return res.json({

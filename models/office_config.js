@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       this.belongsTo(models.user, {
         foreignKey: 'updated_by',
-        as: 'updated_by'
+        as: 'updater'
       })
     }
   }
@@ -31,7 +31,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'office_config',
-    timestamps: false
+    timestamps: false,
+    freezeTableName: true,
   });
   return office_config;
 };

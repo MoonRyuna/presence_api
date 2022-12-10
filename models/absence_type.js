@@ -17,15 +17,15 @@ module.exports = (sequelize, DataTypes) => {
       })
       this.belongsTo(models.user, {
         foreignKey: 'created_by',
-        as: 'created_by'
+        as: 'creator'
       })
       this.belongsTo(models.user, {
         foreignKey: 'updated_by',
-        as: 'updated_by'
+        as: 'updater'
       })
       this.belongsTo(models.user, {
         foreignKey: 'deleted_by',
-        as: 'deleted_by'
+        as: 'deleter'
       })
     }
   }
@@ -39,7 +39,8 @@ module.exports = (sequelize, DataTypes) => {
     deleted_by: DataTypes.BIGINT
   }, {
     sequelize,
-    modelName: 'absence_type'
+    modelName: 'absence_type',
+    freezeTableName: true,
   });
   return absence_type;
 };

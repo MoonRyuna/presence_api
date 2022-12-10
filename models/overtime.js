@@ -17,11 +17,11 @@ module.exports = (sequelize, DataTypes) => {
       })
       this.belongsTo(models.user, {
         foreignKey: 'approved_by',
-        as: 'approved_by'
+        as: 'approver'
       })
       this.belongsTo(models.user, {
         foreignKey: 'rejected_by',
-        as: 'rejected_by'
+        as: 'rejecter'
       })
     }
   }
@@ -38,7 +38,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'overtime',
-    timestamps: false
+    timestamps: false,
+    freezeTableName: true,
   });
   return overtime;
 };
