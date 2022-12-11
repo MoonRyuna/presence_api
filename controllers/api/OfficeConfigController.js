@@ -1,7 +1,29 @@
 const { office_config, user } = require("../../models")
 const Validator = require('validatorjs')
 
-class AuthController {
+class OfficeConfigController {
+  async list(req, res) {
+    try {
+      let officeConfig = await office_config.findOne({
+        where: {
+          id: 1
+        }
+      })
+
+      return res.json({
+        "status": true,
+        "message": "office_config:success",
+        "data": officeConfig
+      })
+
+    } catch (error) {
+      return res.json({
+        "status": false,
+        "message": error.message
+      }) 
+    }
+  }
+
   async update(req, res) {
     let rules = {
         name: 'required',
@@ -84,7 +106,7 @@ class AuthController {
 
       return res.json({
         "status": true,
-        "message": "office_config:success",
+        "message": "office_config:updated",
         "data": data
       })
 
@@ -97,4 +119,4 @@ class AuthController {
   }
 }
 
-module.exports = AuthController
+module.exports = OfficeConfigController
