@@ -7,7 +7,7 @@ class AbsenceTypeController {
   async list(req, res) {
     try {
       let qRes = []
-      let page = req.query.page
+      let page = req.query.page || 1
       let limit = req.query.limit || 10
       let offset = (page - 1) * limit
 
@@ -36,25 +36,20 @@ class AbsenceTypeController {
         order: qOrder,
       })
 
-      let next_res = await absence_type.count({
-        where: qWhere,
-        offset: offset + limit,
-        limit: limit
-      })
-
       let current_page = page
-      let prev_page = page > 1 ? page - 1 : null
-      let next_page = next_res > 0 ? page : null
       let total = await absence_type.count({ where: qWhere })
+      let prev_page = (+page > 1) ? (+page - 1) : null
+      let next_page = total > (+page * limit) ? (+page + 1) : null
 
       return res.json({
         "status": true,
         "message": "absence_type:success",
         "data": {
-          "total": total,
-          "current_page": current_page,
-          "next_page": next_page,
-          "prev_page": prev_page,
+          "total": +total,
+          "current_page": +current_page,
+          "next_page": +next_page,
+          "prev_page": +prev_page,
+          "limit": +limit,
           "result": qRes,
         }
       })
@@ -68,10 +63,9 @@ class AbsenceTypeController {
 
   async findById(req, res) {
     try {
-      let id = req.params.id
       let qRes = await absence_type.findOne({
         where: {
-          id: id
+          id: req.params.id
         }
       })
 
@@ -111,6 +105,17 @@ class AbsenceTypeController {
     } = req.body
 
     try {
+      let userExist = await user.findOne({
+        where: {
+          id: created_by
+        }
+      })
+
+      if(!userExist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
       let qRes = await absence_type.create({
         name: name,
         cut_annual_leave: cut_annual_leave,
@@ -164,7 +169,18 @@ class AbsenceTypeController {
         "message": "absence_type:not found"
       })
 
-      let qRes = await absence_type.update({
+      let userExist = await user.findOne({
+        where: {
+          id: updated_by
+        }
+      })
+
+      if(!userExist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
+      await absence_type.update({
         name: name,
         cut_annual_leave: cut_annual_leave,
         updated_by: updated_by
@@ -174,10 +190,12 @@ class AbsenceTypeController {
         }
       })
 
+      const data = await absence_type.findOne({where: { id: req.params.id}})
+
       return res.json({
         "status": true,
         "message": "absence_type:updated success",
-        "data": qRes
+        "data": data
       })
     } catch (error) {
       return res.json({
@@ -200,7 +218,7 @@ class AbsenceTypeController {
         "message": "absence_type:not found"
       })
 
-      let qRes = await absence_type.destroy({
+      await absence_type.destroy({
         where: {
           id: req.params.id
         }
@@ -209,9 +227,8 @@ class AbsenceTypeController {
       return res.json({
         "status": true,
         "message": "absence_type:deleted success",
-        "data": qRes
+        "data": exist
       })
-      
     } catch (error) {
       return res.json({
         "status": false,
@@ -250,9 +267,20 @@ class AbsenceTypeController {
         "message": "absence_type:not found"
       })
 
-      let qRes = await absence_type.update({
+      let userExist = await user.findOne({
+        where: {
+          id: deleted_by
+        }
+      })
+
+      if(!userExist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
+      await absence_type.update({
         deleted: 1,
-        deleted_at: new Date(),
+        deletedAt: new Date(),
         deleted_by: deleted_by,
       }, {
         where: {
@@ -260,10 +288,12 @@ class AbsenceTypeController {
         }
       })
 
+      const data = await absence_type.findOne({where: { id: req.params.id}})
+      
       return res.json({
         "status": true,
         "message": "absence_type:deleted success",
-        "data": qRes
+        "data": data
       })
     } catch (error) {
       return res.json({
@@ -286,9 +316,9 @@ class AbsenceTypeController {
         "message": "absence_type:not found"
       })
 
-      let qRes = await absence_type.update({
+      await absence_type.update({
         deleted: null,
-        deleted_at: null,
+        deletedAt: null,
         deleted_by: null,
       }, {
         where: {
@@ -296,10 +326,12 @@ class AbsenceTypeController {
         }
       })
 
+      const data = await absence_type.findOne({where: { id: req.params.id}})
+
       return res.json({
         "status": true,
         "message": "absence_type:restored success",
-        "data": qRes
+        "data": data
       })
     } catch (error) {
       return res.json({
