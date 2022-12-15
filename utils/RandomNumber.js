@@ -1,5 +1,3 @@
-
-
 function RandomNumber(length) {
   var digits = '0123456789';
   let random = '';

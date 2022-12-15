@@ -39,6 +39,8 @@ module.exports = (sequelize, DataTypes) => {
     started_work_at: DataTypes.DATE,
     profile_picture: DataTypes.TEXT,
     device_tracker: DataTypes.BOOLEAN,
+    imei: DataTypes.TEXT,
+    device_uid: DataTypes.TEXT,
     deleted: DataTypes.BOOLEAN,
     created_by: DataTypes.BIGINT,
     updated_by: DataTypes.BIGINT,

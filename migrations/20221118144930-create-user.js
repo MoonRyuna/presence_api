@@ -44,6 +44,12 @@ module.exports = {
       device_tracker: {
         type: Sequelize.BOOLEAN
       },
+      imei: {
+        type: Sequelize.TEXT
+      },
+      device_uid: {
+        type: Sequelize.TEXT
+      },
       deleted: {
         type: Sequelize.BOOLEAN
       },

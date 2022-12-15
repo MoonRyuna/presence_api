@@ -1,8 +1,12 @@
 const { user } = require("../../models")
+const { GenerateUserCode, GetPrefixUserCode } = require('../../utils/GenerateCode')
 const Validator = require('validatorjs')
 const bcrypt = require('bcrypt');
-const saltRounds = 10;
 const fs = require('fs')
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
+const saltRounds = 10;
+
 
 class UserController {
   async list(req, res) {
@@ -38,25 +42,20 @@ class UserController {
         order: qOrder,
       })
 
-      let next_res = await user.count({
-        where: qWhere,
-        offset: offset + limit,
-        limit: limit
-      })
-
       let current_page = page
-      let prev_page = page > 1 ? page - 1 : null
-      let next_page = next_res > 0 ? page : null
       let total = await user.count({ where: qWhere })
+      let prev_page = (+page > 1) ? (+page - 1) : null
+      let next_page = total > (+page * limit) ? (+page + 1) : null
 
       return res.json({
         "status": true,
         "message": "user:success",
         "data": {
-          "total": total,
-          "current_page": current_page,
-          "next_page": next_page,
-          "prev_page": prev_page,
+          "total": +total,
+          "current_page": +current_page,
+          "next_page": +next_page,
+          "prev_page": +prev_page,
+          "limit": +limit,
           "result": qRes,
         }
       })
@@ -73,6 +72,7 @@ class UserController {
       let qRes = await user.findOne({
         where: { id: req.params.id }
       })
+
       return res.json({
         "status": true,
         "message": "user:success",
@@ -88,17 +88,14 @@ class UserController {
 
   async create(req, res) {
     let rules = {
-      user_code: "required",
       username: "required",
       password: "required",
-      token: "required",
       email: "required",
       account_type: "required",
       name: "required",
       address: "required",
       description: "required",
       started_work_at: "required",
-      profile_picture: "required",
       device_tracker: "required",
       created_by: "required",
     }     
@@ -113,10 +110,8 @@ class UserController {
     }
 
     let {
-      user_code,
       username,
       password,
-      token,
       email,
       account_type,
       name,
@@ -129,11 +124,60 @@ class UserController {
     } = req.body
 
     try{
+      let userExist = await user.findOne({
+        where: {
+          id: created_by
+        }
+      })
+
+      if(!userExist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
+      let usernameExist = await user.findOne({
+        where: {
+          username: username
+        }
+      })
+
+      if(usernameExist) return res.json({
+        "status": false,
+        "message": "user:username already exist"
+      })
+
+      let emailExist = await user.findOne({
+        where: {
+          email: email
+        }
+      })
+
+      if(emailExist) return res.json({
+        "status": false,
+        "message": "user:email already exist"
+      })
+      
+      const rulesAccountType = ['admin', 'hrd', 'karyawan']
+      if(!rulesAccountType.includes(account_type)){
+        return res.json({
+          "status": false,
+          "message": "user:account type not valid (must be: admin, hrd, karyawan)"
+        })
+      }
+
+      const lastCode = await user.max('user_code', {
+        where: { user_code: { [Op.iLike]: `${GetPrefixUserCode(account_type)}%` } }
+      })
+      let user_code = await GenerateUserCode(GetPrefixUserCode(account_type), lastCode)
+      
+      if(!profile_picture){
+        profile_picture = 'images/default.png'
+      }
+
       let qRes = await user.create({
         user_code: user_code,
         username: username,
         password: await bcrypt.hash(password, saltRounds),
-        token: token,
         email: email,
         account_type: account_type,
         name: name,
@@ -148,10 +192,11 @@ class UserController {
       
       return res.json({
         "status": true,
-        "message": "user:success",
+        "message": "user:created success",
         "data": qRes
       })
     } catch (error) {
+      // console.log(error)
       return res.status(500).json({
         "status": false,
         "message": error.message,
@@ -161,16 +206,13 @@ class UserController {
 
   async update(req, res) {
     let rules = {
-      user_code: "required",
       username: "required",
-      token: "required",
       email: "required",
       account_type: "required",
       name: "required",
       address: "required",
       description: "required",
       started_work_at: "required",
-      profile_picture: "required",
       device_tracker: "required",
       updated_by: "required",
     }     
@@ -185,9 +227,7 @@ class UserController {
     }
 
     let {
-      user_code,
       username,
-      token,
       email,
       account_type,
       name,
@@ -200,6 +240,17 @@ class UserController {
     } = req.body
 
     try{
+      let userExist = await user.findOne({
+        where: {
+          id: updated_by
+        }
+      })
+
+      if(!userExist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
       const exist = await user.findOne({
         where: {
           id: req.params.id
@@ -211,10 +262,44 @@ class UserController {
         "message": "user:not found"
       })
 
-      let data = {
-        user_code: user_code,
+      let usernameExist = await user.findOne({
+        where: {
+          username: username,
+          id: {
+            [Op.not]: req.params.id 
+          }
+        }
+      })
+
+      if(usernameExist) return res.json({
+        "status": false,
+        "message": "user:username already exist"
+      })
+
+      let emailExist = await user.findOne({
+        where: {
+          email: email,
+          id: {
+            [Op.not]: req.params.id 
+          }
+        }
+      })
+
+      if(emailExist) return res.json({
+        "status": false,
+        "message": "user:email already exist"
+      })
+
+      const rulesAccountType = ['admin', 'hrd', 'karyawan']
+      if(!rulesAccountType.includes(account_type)){
+        return res.json({
+          "status": false,
+          "message": "user:account type not valid (must be: admin, hrd, karyawan)"
+        })
+      }
+
+      let updateData = {
         username: username,
-        token: token,
         email: email,
         account_type: account_type,
         name: name,
@@ -227,25 +312,27 @@ class UserController {
       }
 
       if(req.body?.password && req.body?.password != null){
-        data.password = await bcrypt.hash(req.body.password, saltRounds)
+        updateData.password = await bcrypt.hash(req.body.password, saltRounds)
       }
       
-      let qRes = await user.update(data, {
+      await user.update(updateData, {
         where: { id: req.params.id }
       })
 
       //delete old picture
-      if(exist.profile_picture != profile_picture){ 
+      if(exist.profile_picture != profile_picture && exist.profile_picture != 'images/default.png'){ 
         const file = `./public/${exist.profile_picture}`
         if(fs.existSync(file)){
           fs.unlinkSync(file)
         }
       }
 
+      const data = user.findOne({where: { id: req.params.id}})
+      
       return res.json({
         "status": true,
-        "message": "user:success",
-        "data": qRes
+        "message": "user:updated success",
+        "data": data
       })
     } catch (error) {
       return res.status(500).json({
@@ -267,9 +354,8 @@ class UserController {
         "status": false,
         "message": "user:not found"
       })
-
       
-      let qRes = await user.destroy({
+      await user.destroy({
         where: {
           id: req.params.id
         }
@@ -327,7 +413,18 @@ class UserController {
         "message": "user:not found"
       })
 
-      let qRes = await user.update({
+      let userExist = await user.findOne({
+        where: {
+          id: deleted_by
+        }
+      })
+
+      if(!userExist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
+      await user.update({
         deleted: 1,
         deleted_at: new Date(),
         deleted_by: deleted_by,
@@ -337,10 +434,13 @@ class UserController {
         }
       })
 
+      
+      const data = await user.findOne({where: { id: req.params.id}})
+      
       return res.json({
         "status": true,
         "message": "user:deleted success",
-        "data": qRes
+        "data": data
       })
     } catch (error) {
       return res.json({
@@ -363,7 +463,7 @@ class UserController {
         "message": "user:not found"
       })
 
-      let qRes = await user.update({
+      await user.update({
         deleted: null,
         deleted_at: null,
         deleted_by: null,
@@ -373,10 +473,12 @@ class UserController {
         }
       })
 
+      const data = await user.findOne({where: { id: req.params.id}})
+
       return res.json({
         "status": true,
         "message": "user:restored success",
-        "data": qRes
+        "data": data
       })
     } catch (error) {
       return res.json({

@@ -158,7 +158,7 @@ class AbsenceTypeController {
     } = req.body
 
     try {
-      let exist = await absence_type.findOne({
+      const exist = await absence_type.findOne({
         where: {
           id: req.params.id
         }
@@ -207,7 +207,7 @@ class AbsenceTypeController {
 
   async delete(req, res) {
     try {
-      let exist = await absence_type.findOne({
+      const exist = await absence_type.findOne({
         where: {
           id: req.params.id
         }
@@ -256,7 +256,7 @@ class AbsenceTypeController {
     } = req.body
 
     try {
-      let exist = await absence_type.findOne({
+      const exist = await absence_type.findOne({
         where: {
           id: req.params.id
         }
@@ -305,7 +305,7 @@ class AbsenceTypeController {
 
   async restore(req, res) {
     try {
-      let exist = await absence_type.findOne({
+      const exist = await absence_type.findOne({
         where: {
           id: req.params.id
         }
