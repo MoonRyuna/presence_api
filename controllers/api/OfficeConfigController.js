@@ -1,5 +1,6 @@
-const { office_config, user } = require("../../models")
+const { office_config, user, sequelize } = require("../../models")
 const Validator = require('validatorjs')
+const fs = require('fs')
 
 class OfficeConfigController {
   async get(req, res) {
@@ -28,7 +29,6 @@ class OfficeConfigController {
     let rules = {
         name: 'required',
         theme: 'required',
-        logo: 'required',
         latitude: 'required',
         longitude: 'required',
         radius: 'required',
@@ -60,6 +60,7 @@ class OfficeConfigController {
 
     let id = req.params.id
 
+    const t = await sequelize.transaction();
     try {
       let officeConfig = await office_config.findOne({
         where: {
@@ -90,7 +91,6 @@ class OfficeConfigController {
       const data  = {
         name: name,
         theme: theme,
-        logo: logo,
         latitude: latitude,
         longitude: longitude,
         radius: radius,
@@ -100,17 +100,37 @@ class OfficeConfigController {
         updatedAt: new Date()
       }
 
+      if(logo != ""){
+        data.logo = logo
+      }
+
       await office_config.update(data, {
         where: { id: id }
       })
 
+      
+      //delete old picture
+      if(logo != "" && 
+        officeConfig.logo != "" && 
+        officeConfig.logo != logo && 
+        officeConfig.logo != 'images/default-logo.png'){ 
+        const file = `public/${officeConfig.logo}`
+        if(fs.existsSync(file)){
+          fs.unlinkSync(file)
+        }
+      }
+
+      const ndata = await office_config.findOne({where: { id: req.params.id}})
+      
+      await t.commit();
       return res.json({
         "status": true,
         "message": "office_config:updated",
-        "data": data
+        "data": ndata
       })
 
     } catch (error) {
+      await t.rollback();
       return res.json({
         "status": false,
         "message": error.message

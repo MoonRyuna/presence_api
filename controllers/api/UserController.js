@@ -245,6 +245,7 @@ class UserController {
       updated_by
     } = req.body
 
+    const t = await sequelize.transaction();
     try{
       let userExist = await user.findOne({
         where: {
