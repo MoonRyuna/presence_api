@@ -45,7 +45,7 @@ class AuthMiddleware {
       }else{
         return res.json({
           "status": false,
-          "message": "user:not found"
+          "message": "user:not found (token invalid)"
         })
       }
     } catch (error) {

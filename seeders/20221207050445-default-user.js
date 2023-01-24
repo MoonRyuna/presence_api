@@ -8,7 +8,6 @@ module.exports = {
     try {
       await queryInterface.bulkInsert('user', [
         {
-          id: 1,
           user_code: '10.001',
           username: 'admin',
           password: await bcrypt.hash('admin', saltRounds),
@@ -29,7 +28,6 @@ module.exports = {
           updatedAt: new Date()
         },
         { 
-          id: 2,
           user_code: '11.001',
           username: 'meta.violeta',
           password: await bcrypt.hash('rahasia', saltRounds),

@@ -2,7 +2,7 @@ const { office_config, user } = require("../../models")
 const Validator = require('validatorjs')
 
 class OfficeConfigController {
-  async list(req, res) {
+  async get(req, res) {
     try {
       let officeConfig = await office_config.findOne({
         where: {

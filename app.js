@@ -14,6 +14,7 @@ const AuthRouter = require("./routes/api/AuthRouter")
 const OfficeConfigRouter = require("./routes/api/OfficeConfigRouter")
 const AbsenceTypeRouter = require("./routes/api/AbsenceTypeRouter")
 const UserRouter = require('./routes/api/UserRouter')
+const UploadRouter = require('./routes/api/UploadRouter')
 
 const app = express()
 const swaggerDocument = YAML.load('./openapi/collection.yaml')
@@ -68,6 +69,7 @@ app.use(apiVersion, AuthRouter)
 app.use(apiVersion, OfficeConfigRouter)
 app.use(apiVersion, AbsenceTypeRouter)
 app.use(apiVersion, UserRouter)
+app.use(apiVersion, UploadRouter)
 
 app.use((error, req, res, next) => {
   return res.json({

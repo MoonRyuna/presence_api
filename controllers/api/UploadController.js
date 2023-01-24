@@ -1,15 +1,19 @@
-const { user } = require("../../models")
-const jwt = require('jsonwebtoken')
-const Validator = require('validatorjs')
-const bcrypt = require('bcryptjs')
-
-class AuthController {
+class UploadController {
   async image(req, res) {
+    return res.json({
+      "status": true,
+      "message": "image uploaded",
+      "data": req.file
+    })
   }
 
-  async attachment(req, res) {
-
+  async document(req, res) {
+    return res.json({
+      "status": true,
+      "message": "file uploaded",
+      "data": req.file
+    })
   }
 }
 
-module.exports = AuthController
+module.exports = UploadController

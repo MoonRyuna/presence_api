@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs')
 class AuthController {
   async auth(req, res) {
     let rules = {
-      username: 'required', 
+      username: 'required|alpha_dash', 
       password: 'required'
     }
 
@@ -120,7 +120,7 @@ class AuthController {
       if(!passwordIsValid) {
         return res.json({
           "status": false,
-          "message": "password:not match"
+          "message": "password:password invalid"
         })
       }
 

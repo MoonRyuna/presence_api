@@ -15,15 +15,15 @@ class AbsenceTypeController {
       if(req.query.name) qWhere.name = { [Op.iLike]: `%${req.query.name}%` }
       if(req.query.deleted) qWhere.deleted = req.query.deleted
 
+      
       let qOrder = []
       if(req.query.order != undefined){
         let order = req.query.order.split(',')
-        order = order.split(',')
         if(order.length > 0){
           order.forEach((o) => {
             let obj = o.split(':')
             if(obj.length > 0) {
-              if(obj[1] == 'ASC' || obj[1] == 'DESC') qOrder.push([obj[0], obj[1]])
+              if(obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
             }
           })
         }

@@ -1,15 +1,15 @@
-const { user } = require("../../models")
+const { user, sequelize } = require("../../models")
 const { GenerateUserCode, GetPrefixUserCode } = require('../../utils/GenerateCode')
 const Validator = require('validatorjs')
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt')
 const fs = require('fs')
-const Sequelize = require('sequelize');
-const Op = Sequelize.Op;
-const saltRounds = 10;
-
+const Sequelize = require('sequelize')
+const Op = Sequelize.Op
+const saltRounds = 10
 
 class UserController {
   async list(req, res) {
+    const t = await sequelize.transaction();
     try {
       let qRes = []
       let page = req.query.page || 1
@@ -24,12 +24,11 @@ class UserController {
       let qOrder = []
       if(req.query.order != undefined){
         let order = req.query.order.split(',')
-        order = order.split(',')
         if(order.length > 0){
           order.forEach((o) => {
             let obj = o.split(':')
             if(obj.length > 0) {
-              if(obj[1] == 'ASC' || obj[1] == 'DESC') qOrder.push([obj[0], obj[1]])
+              if(obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
             }
           })
         }
@@ -47,6 +46,7 @@ class UserController {
       let prev_page = (+page > 1) ? (+page - 1) : null
       let next_page = total > (+page * limit) ? (+page + 1) : null
 
+      await t.commit();
       return res.json({
         "status": true,
         "message": "user:success",
@@ -60,6 +60,7 @@ class UserController {
         }
       })
     } catch (error) {
+      await t.rollback();
       return res.status(500).json({
         "status": false,
         "message": error.message,
@@ -68,17 +69,20 @@ class UserController {
   }
 
   async findById(req, res) {
+    const t = await sequelize.transaction();
     try {
       let qRes = await user.findOne({
         where: { id: req.params.id }
       })
 
+      await t.commit();
       return res.json({
         "status": true,
         "message": "user:success",
         "data": qRes
       })
     } catch (error) {
+      await t.rollback();
       return res.status(500).json({
         "status": false,
         "message": error.message,
@@ -88,9 +92,9 @@ class UserController {
 
   async create(req, res) {
     let rules = {
-      username: "required",
-      password: "required",
-      email: "required",
+      username: "required|alpha_dash",
+      password: "required|alpha_dash|confirmed",
+      email: "required|email",
       account_type: "required",
       name: "required",
       address: "required",
@@ -123,6 +127,7 @@ class UserController {
       created_by
     } = req.body
 
+    const t = await sequelize.transaction();
     try{
       let userExist = await user.findOne({
         where: {
@@ -189,14 +194,15 @@ class UserController {
         created_by: created_by,
         deleted: 0,
       })
-      
+
+      await t.commit();
       return res.json({
         "status": true,
         "message": "user:created success",
         "data": qRes
       })
     } catch (error) {
-      // console.log(error)
+      await t.rollback();
       return res.status(500).json({
         "status": false,
         "message": error.message,
@@ -206,8 +212,8 @@ class UserController {
 
   async update(req, res) {
     let rules = {
-      username: "required",
-      email: "required",
+      username: "required|alpha_dash",
+      email: "required|email",
       account_type: "required",
       name: "required",
       address: "required",
@@ -306,13 +312,12 @@ class UserController {
         address: address,
         description: description,
         started_work_at: started_work_at,
-        profile_picture: profile_picture,
         device_tracker: device_tracker,
         updated_by: updated_by,
       }
 
-      if(req.body?.password && req.body?.password != null){
-        updateData.password = await bcrypt.hash(req.body.password, saltRounds)
+      if(profile_picture != ""){
+        updateData.profile_picture = profile_picture
       }
       
       await user.update(updateData, {
@@ -320,21 +325,26 @@ class UserController {
       })
 
       //delete old picture
-      if(exist.profile_picture != profile_picture && exist.profile_picture != 'images/default.png'){ 
-        const file = `./public/${exist.profile_picture}`
-        if(fs.existSync(file)){
+      if(profile_picture != "" && 
+        exist.profile_picture != "" && 
+        exist.profile_picture != profile_picture && 
+        exist.profile_picture != 'images/default.png'){ 
+        const file = `public/${exist.profile_picture}`
+        if(fs.existsSync(file)){
           fs.unlinkSync(file)
         }
       }
 
-      const data = user.findOne({where: { id: req.params.id}})
+      const data = await user.findOne({where: { id: req.params.id}})
       
+      await t.commit();
       return res.json({
         "status": true,
         "message": "user:updated success",
         "data": data
       })
     } catch (error) {
+      await t.rollback();
       return res.status(500).json({
         "status": false,
         "message": error.message,
@@ -343,6 +353,7 @@ class UserController {
   }
 
   async delete(req, res) {
+    const t = await sequelize.transaction();
     try {
       const exist = await user.findOne({
         where: {
@@ -362,20 +373,22 @@ class UserController {
       })
 
       //delete picture
-      if(exist.profile_picture != null){ 
-        const file = `./public/${profile_picture}`
-        if(fs.existSync(file)){
+      if((exist.profile_picture != "" || exist.profile_picture) && exist.profile_picture != 'images/default.png'){ 
+        const file = `public/${exist.profile_picture}`
+        if(fs.existsSync(file)){
           fs.unlinkSync(file)
         }
       }
 
+      await t.commit();
       return res.json({
         "status": true,
         "message": "user:deleted success",
-        "data": qRes
+        "data": exist
       })
       
     } catch (error) {
+      await t.rollback();
       return res.json({
         "status": false,
         "message": error.message
@@ -401,6 +414,7 @@ class UserController {
       deleted_by
     } = req.body
 
+    const t = await sequelize.transaction();
     try {
       const exist = await user.findOne({
         where: {
@@ -426,23 +440,24 @@ class UserController {
 
       await user.update({
         deleted: 1,
-        deleted_at: new Date(),
+        deletedAt: new Date(),
         deleted_by: deleted_by,
       }, {
         where: {
           id: req.params.id
         }
       })
-
       
       const data = await user.findOne({where: { id: req.params.id}})
       
+      await t.commit();
       return res.json({
         "status": true,
         "message": "user:deleted success",
         "data": data
       })
     } catch (error) {
+      await t.rollback();
       return res.json({
         "status": false,
         "message": error.message
@@ -451,6 +466,7 @@ class UserController {
   }
 
   async restore(req, res) {
+    const t = await sequelize.transaction();
     try {
       const exist = await user.findOne({
         where: {
@@ -475,12 +491,78 @@ class UserController {
 
       const data = await user.findOne({where: { id: req.params.id}})
 
+      await t.commit();
       return res.json({
         "status": true,
         "message": "user:restored success",
         "data": data
       })
     } catch (error) {
+      await t.rollback();
+      return res.json({
+        "status": false,
+        "message": error.message
+      }) 
+    }
+  }
+
+  async changePassword(req, res) { 
+    let rules = {
+      old_password: 'required',
+      new_password: 'required|alpha_dash|confirmed|min:6',
+    }
+
+    let validation = new Validator(req.body, rules)
+    if(validation.fails()){
+      return res.status(422).json({
+        status: false,
+        message: 'form:is not complete',
+        data: validation.errors.all()
+      })
+    }
+
+    let { 
+      old_password,
+      new_password,
+    } = req.body
+
+    const t = await sequelize.transaction();
+    try {
+      const exist = await user.findOne({
+        where: {
+          id: req.params.id
+        }
+      })
+
+      if(!exist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
+      const passwordMatch = await bcrypt.compare(old_password, exist?.password);
+      if(!passwordMatch) return res.json({
+        "status": false,
+        "message": "user:old password not match"
+      })
+
+      await user.update({
+        password: new_password
+      }, {
+        where: {
+          id: req.params.id
+        }
+      })
+
+      const data = await user.findOne({where: { id: req.params.id}})
+
+      await t.commit();
+      return res.json({
+        "status": true,
+        "message": "user:change password success",
+        "data": data
+      })
+    } catch (error) {
+      await t.rollback();
       return res.json({
         "status": false,
         "message": error.message
