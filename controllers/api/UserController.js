@@ -547,7 +547,7 @@ class UserController {
       })
 
       await user.update({
-        password: new_password
+        password: await bcrypt.hash(new_password, saltRounds)
       }, {
         where: {
           id: req.params.id

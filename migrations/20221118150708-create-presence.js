@@ -32,8 +32,11 @@ module.exports = {
       overtime: {
         type: Sequelize.BOOLEAN
       },
-      overtime_amount: {
-        type: Sequelize.DOUBLE
+      overtime_start_at: {
+        type: Sequelize.DATE
+      },
+      overtime_end_at: {
+        type: Sequelize.DATE
       },
       user_id: {
         type: Sequelize.BIGINT,

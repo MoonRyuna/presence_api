@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class overtime extends Model {
+  class submission extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -12,22 +12,24 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       this.belongsTo(models.user, {
-        foreignKey: 'user_id',
-        as: 'user'
+        foreignKey: 'authorization_by',
+        as: 'authorizer'
       })
     }
   }
-  overtime.init({
-    user_id: DataTypes.BIGINT,
-    overtime_at: DataTypes.DATE,
-    overtime_status: DataTypes.TEXT,
-    desc: DataTypes.TEXT,
-    attachment: DataTypes.TEXT
+  submission.init({
+    submission_type: DataTypes.TEXT,
+    submission_at: DataTypes.DATE,
+    submission_status: DataTypes.TEXT,
+    submission_ref_table: DataTypes.TEXT,
+    submission_ref_id: DataTypes.BIGINT,
+    authorization_by: DataTypes.BIGINT,
+    authorization_at: DataTypes.DATE
   }, {
     sequelize,
-    modelName: 'overtime',
+    modelName: 'submission',
     timestamps: false,
     freezeTableName: true,
   });
-  return overtime;
+  return submission;
 };

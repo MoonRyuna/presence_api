@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('overtime', {
+    await queryInterface.createTable('user_annual_leave', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -18,21 +18,23 @@ module.exports = {
         },
         onDelete: 'CASCADE'
       },
-      overtime_at: {
+      year: {
+        type: Sequelize.TEXT
+      },
+      annual_leave: {
+        type: Sequelize.INTEGER
+      },
+      createdAt: {
+        allowNull: false,
         type: Sequelize.DATE
       },
-      overtime_status: {
-        type: Sequelize.TEXT
-      },
-      desc: {
-        type: Sequelize.TEXT
-      },
-      attachment: {
-        type: Sequelize.TEXT
-      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE
+      }
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('overtime');
+    await queryInterface.dropTable('user_annual_leave');
   }
 };

@@ -11,5 +11,6 @@ router.put('/user/:id', AuthMiddleware.check, ctl.update)
 router.delete('/user/:id', AuthMiddleware.check, ctl.delete)
 router.delete('/user/soft/:id', AuthMiddleware.check, ctl.softDelete)
 router.post('/user/restore/:id', AuthMiddleware.check, ctl.restore)
+router.put('/user/change_password/:id', AuthMiddleware.check, ctl.changePassword)
 
 module.exports = router

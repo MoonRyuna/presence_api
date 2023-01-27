@@ -8,11 +8,20 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      submission_at: {
+      user_id: {
+        type: Sequelize.BIGINT,
+        allowNull: false,
+        references: {        
+          model: 'user',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
+      absence_at: {
         type: Sequelize.DATE
       },
-      submission_status: {
-        type: Sequelize.STRING
+      absence_status: {
+        type: Sequelize.TEXT
       },
       absence_type_id: {
         type: Sequelize.BIGINT,
@@ -26,45 +35,12 @@ module.exports = {
       cut_annual_leave: {
         type: Sequelize.BOOLEAN
       },
-      user_id: {
-        type: Sequelize.BIGINT,
-        allowNull: false,
-        references: {        
-          model: 'user',
-          key: 'id'
-        },
-        onDelete: 'CASCADE'
+      desc: {
+        type: Sequelize.TEXT
       },
       attachment: {
         type: Sequelize.TEXT
       },
-      absence_at: {
-        type: Sequelize.DATE
-      },
-      approvedAt: {
-        type: Sequelize.DATE
-      },
-      approved_by: {
-        type: Sequelize.BIGINT,
-        allowNull: true,
-        references: {        
-          model: 'user',
-          key: 'id'
-        },
-        onDelete: 'CASCADE'
-      },
-      rejectedAt: {
-        type: Sequelize.DATE
-      },
-      rejected_by: {
-        type: Sequelize.BIGINT,
-        allowNull: true,
-        references: {        
-          model: 'user',
-          key: 'id'
-        },
-        onDelete: 'CASCADE'
-      }
     });
   },
   async down(queryInterface, Sequelize) {

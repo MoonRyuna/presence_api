@@ -12,7 +12,7 @@ module.exports = {
         {
           name: 'PT. Digital Amore Kriyanesi',
           theme: 'default',
-          logo: 'images/logo-default.png',
+          logo: 'images/default-logo.png',
           latitude:  -7.01137531169352,
           longitude: 107.55235349704994,
           radius: 2,
@@ -27,7 +27,7 @@ module.exports = {
         {
           name: 'PT. Digital Amore Kriyanesi',
           theme: 'default',
-          logo: 'images/logo-default.png',
+          logo: 'images/default-logo.png',
           latitude:  -7.01137531169352,
           longitude: 107.55235349704994,
           radius: 2,

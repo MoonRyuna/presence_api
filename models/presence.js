@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       })
       this.belongsTo(models.user, {
         foreignKey: 'rejected_by',
-        as: 'rejecter'
+        as: 'rejector'
       })
     }
   }
@@ -34,7 +34,8 @@ module.exports = (sequelize, DataTypes) => {
     late: DataTypes.BOOLEAN,
     late_amount: DataTypes.DOUBLE,
     overtime: DataTypes.BOOLEAN,
-    overtime_amount: DataTypes.DOUBLE,
+    overtime_start_at: DataTypes.DATE,
+    overtime_end_at: DataTypes.DATE,
     user_id: DataTypes.BIGINT
   }, {
     sequelize,

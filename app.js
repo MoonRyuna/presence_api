@@ -15,9 +15,10 @@ const OfficeConfigRouter = require("./routes/api/OfficeConfigRouter")
 const AbsenceTypeRouter = require("./routes/api/AbsenceTypeRouter")
 const UserRouter = require('./routes/api/UserRouter')
 const UploadRouter = require('./routes/api/UploadRouter')
+const AbsenceRouter = require('./routes/api/AbsenceRouter')
 
 const app = express()
-const swaggerDocument = YAML.load('./openapi/collection.yaml')
+const swaggerDocument = YAML.load('./docs/collection.yaml')
 
 const apiVersion = '/api/v1'
 
@@ -70,12 +71,53 @@ app.use(apiVersion, OfficeConfigRouter)
 app.use(apiVersion, AbsenceTypeRouter)
 app.use(apiVersion, UserRouter)
 app.use(apiVersion, UploadRouter)
+app.use(apiVersion, AbsenceRouter)
 
 app.use((error, req, res, next) => {
   return res.json({
     status: false,
     message: error.message
   })
+})
+
+//cron
+const schedule = require('node-schedule');
+const { office_config, user, user_annual_leave, sequelize } = require("./models")
+
+const job = schedule.scheduleJob('0 0 0 1 1 *', async function(){
+  console.log('cron start')
+  
+  const t = await sequelize.transaction();
+  try {
+    const officeConfig = await office_config.findByPk(1)
+    const annual_leave = officeConfig.amount_of_annual _leave
+    
+    const users = await user.findAll()
+    const cYear = moment().format('YYYY')
+    users.forEach(async(user) => {
+      const userAnualLeaveExist = await user_annual_leave.findOne({
+        where: {
+          user_id: user.id,
+          year: cYear
+        }
+      })
+  
+      if(!userAnualLeaveExist){
+        user_annual_leave.create({
+          user_id: user.id,
+          year: cYear,
+          annual_leave: annual_leave,
+        })
+      }
+    })
+    
+    await t.commit()
+    console.log('cron success')
+  } catch (error) {
+    console.log("cron failed")
+    console.log(error)
+    await t.rollback()
+  }
 })
 
 module.exports = app

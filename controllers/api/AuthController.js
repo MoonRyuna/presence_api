@@ -49,11 +49,9 @@ class AuthController {
         createdBy: auth.createdBy,
         updatedBy: auth.updatedBy,
         generate: new Date(),
-        token: 'JsonWebToken',
-        expiresIn: '24'
       }
       
-      let token = jwt.sign({ data: payload}, process.env.JWT_PRIVATE_KEY, { 
+      let token = jwt.sign({ data: payload}, process.env.JWT_PRIVATE_KEY, {
         expiresIn: '24h' 
       });
       
