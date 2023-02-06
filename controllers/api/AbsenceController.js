@@ -1,10 +1,13 @@
-const { absence, submission, user, sequelize } = require("../../models")
+const { absence, submission, user, absence_type, user_annual_leave, sequelize } = require("../../models")
 const Sequelize = require('sequelize')
 const Op = Sequelize.Op
+const Validator = require('validatorjs')
+const { where } = require("sequelize")
+const moment = require("moment")
+const { response } = require("express")
 
 class AbsenceController {
   async list(req, res) {
-    const t = await sequelize.transaction();
     try {
       let qRes = []
       let page = req.query.page || 1
@@ -12,6 +15,7 @@ class AbsenceController {
       let offset = (page - 1) * limit
 
       let qWhere = {}
+      if(req.query.user_id) qWhere.user_id = req.query.user_id
       if(req.query.start_date && req.query.end_date) qWhere.absence_at = { [Op.between]: [req.query.start_date, req.query.end_date] }
 
       let qOrder = []
@@ -32,6 +36,10 @@ class AbsenceController {
         limit: limit,
         where: qWhere,
         order: qOrder,
+        include: [
+          { model: user, as: 'user', attributes: [ 'id', 'user_code', 'username', 'name' ] },
+          { model: absence_type, as: 'absence_type', attributes: [ 'id', 'name', 'cut_annual_leave' ] },
+        ]
       })
 
       let current_page = page
@@ -39,7 +47,6 @@ class AbsenceController {
       let prev_page = (+page > 1) ? (+page - 1) : null
       let next_page = total > (+page * limit) ? (+page + 1) : null
 
-      await t.commit();
       return res.json({
         "status": true,
         "message": "absence:success",
@@ -53,7 +60,43 @@ class AbsenceController {
         }
       })
     } catch (error) {
-      await t.rollback();
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
+      })
+    }        
+  }
+
+  async list_submission(req, res) {
+    try {
+      let absence_id = req.params.id;
+      const qAbsence = await absence.findByPk(absence_id)
+      if(!qAbsence){
+        return res.json({
+          "status": false,
+          "message": "absence:not found",
+        })
+      }
+
+      const qSubmission = await submission.findAll({
+        where: {
+          submission_ref_table: 'absence',
+          submission_ref_id: absence_id
+        }
+      })
+
+      if(!qSubmission) {
+        return res.json({
+          "status": false,
+          "message": "submission:empty",
+        })
+      }
+
+      return res.json({
+        "status": true,
+        "message": "submission:success",
+      })
+    } catch (error) {
       return res.status(500).json({
         "status": false,
         "message": error.message,
@@ -69,7 +112,6 @@ class AbsenceController {
       return res.json({
         "status": true,
         "message": "absence:success",
-        "data": qRes,
       })
     } catch (error) {
       await t.rollback();
@@ -119,11 +161,11 @@ class AbsenceController {
       })
 
       const cut_annual_leave = absenceTypeExist?.cut_annual_leave;
-
+      
       let qAbsence = await absence.create({
         user_id: user_id,
         absence_at: absence_at,
-        absence_status: 1, //0 = pending, 1 = approve, 2 = reject, 3 = cancel
+        absence_status: 1, //0 = pending, 1 = approved, 2 = rejected, 3 = canceled
         absence_type_id: absence_type_id,
         cut_annual_leave: cut_annual_leave,
         desc: desc,
@@ -133,7 +175,7 @@ class AbsenceController {
       await submission.create({
         submission_type: "new", //new, cancel
         submission_at: new Date(),
-        submission_status: 0, //0 = pending, 1 = approve, 2 = reject, 3 = cancel
+        submission_status: 0, //0 = pending, 1 = approved, 2 = rejected
         submission_ref_table: "absence",
         submission_ref_id: qAbsence.id,
       })
@@ -142,7 +184,6 @@ class AbsenceController {
       return res.json({
         "status": true,
         "message": "absence:success",
-        "data": qAbsence,
       })
     } catch (error) {
       await t.rollback();
@@ -151,6 +192,53 @@ class AbsenceController {
         "message": error.message,
       })
     }        
+  }
+
+  async cancel(req, res) {
+    let rules = {
+      absence_id: "required",
+    }     
+
+    let validation = new Validator(req.body, rules)
+    if(validation.fails()){
+      return res.status(422).json({
+        "status": false,
+        "message": 'form:is not complete',
+        "data": validation.errors.all()
+      })
+    }
+
+    let { absence_id } = req.body
+
+    const t = await sequelize.transaction();
+    try {
+      let qAbsence = await absence.findByPk(absence_id)
+      if(!qAbsence) return res.json({
+        "status": false,
+        "message": "absence:not found"
+      })
+
+      await submission.create({
+        submission_type: "cancel", //new, cancel
+        submission_at: new Date(),
+        submission_status: 0, //0 = pending, 1 = approved, 2 = rejected
+        submission_ref_table: "absence",
+        submission_ref_id: qAbsence.id,
+      })
+      
+      await t.commit();
+      return res.json({
+        "status": true,
+        "message": "absence:success",
+      })
+    }
+    catch (error) {
+      await t.rollback();
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
+      })
+    }    
   }
 
   async approve(req, res) {
@@ -180,7 +268,7 @@ class AbsenceController {
 
       if(qSubmission.submission_status != 0) return res.json({
         "status": false,
-        "message": "submission:already " + qSubmission.submission_status == 1 ? "approved" : "rejected"
+        "message": "submission:already " + (qSubmission.submission_status == 1 ? "approved" : "rejected")
       })
 
       let qAbsence = await absence.findByPk(qSubmission.submission_ref_id)
@@ -194,26 +282,101 @@ class AbsenceController {
         "status": false,
         "message": "user:not found"
       })
-      
-      
-      if(absence_status == 1){
-        if(qAbsence.cut_annual_leave == 1){
+
+      if(qSubmission.submission_type == 'new'){
+        if(qAbsence.cut_annual_leave){
+          const qUserAnnualLeave = await user_annual_leave.findAll({
+            where: {
+              user_id: qAbsence.user_id,
+              year: moment().format('YYYY')
+            }
+          })
+
+          if(qUserAnnualLeave){
+            let qUA = qUserAnnualLeave[0]
+            if((qUA.annual_leave - 1) == 0){
+              return res.json({
+                "status": true,
+                "message": "absence:jatah cuti tahun "+moment().format('YYYY')+" habis",
+              })
+            }
+
+            let nAnnualLeave = qUA.annual_leave - 1;
+            console.log('nA', nAnnualLeave)
+            await user_annual_leave.update({
+              annual_leave: nAnnualLeave
+            }, {
+              where: {
+                user_id: qAbsence.user_id
+              }
+            })
+          }
+        }
+        
+        await submission.update({
+          submission_status: "1",
+          authorization_by: qUser.id,
+          authorization_at: new Date()
+        }, {
+          where: {
+            id: submission_id
+          }
+        })
+
+        await absence.update({
+          absence_status: "1"
+        }, {
+          where: {
+            id: qAbsence.id
+          }
+        })
+
+      }else if(qSubmission.submission_type == 'cancel'){
+        await submission.update({
+          submission_status: "1",
+          authorization_by: qUser.id,
+          authorization_at: new Date()
+        }, {
+          where: {
+            id: submission_id
+          }
+        })
+
+        await absence.update({
+          absence_status: "3"
+        }, {
+          where: {
+            id: qAbsence.id
+          }
+        })
+        if(qAbsence.cut_annual_leave){
+          const qUserAnnualLeave = await user_annual_leave.findAll({
+            where: {
+              user_id: qAbsence.user_id,
+              year: moment().format('YYYY')
+            }
+          })
+
+          if(qUserAnnualLeave){
+            let qUA = qUserAnnualLeave[0]
+
+            let nAnnualLeave = qUA.annual_leave + 1;
+            console.log('nA', nAnnualLeave)
+            await user_annual_leave.update({
+              annual_leave: nAnnualLeave
+            }, {
+              where: {
+                user_id: qAbsence.user_id
+              }
+            })
+          }
         }
       }
-
-      await qAbsence.update({
-        absence_status: absence_status,
-      })
-
-      await qSubmission.update({
-        submission_status: absence_status,
-      })
 
       await t.commit();
       return res.json({
         "status": true,
-        "message": "absence:success",
-        "data": qAbsence,
+        "message": "absence:approve success",
       })
     } catch (error) {
       await t.rollback();
@@ -224,7 +387,91 @@ class AbsenceController {
     }        
   }
 
-  
+  async reject(req, res) {
+    let rules = {
+      submission_id: "required",
+      authorization_by: "required",
+    }     
+
+    let validation = new Validator(req.body, rules)
+    if(validation.fails()){
+      return res.status(422).json({
+        "status": false,
+        "message": 'form:is not complete',
+        "data": validation.errors.all()
+      })
+    }
+
+    let { submission_id, authorization_by } = req.body
+
+    const t = await sequelize.transaction();
+    try {
+      let qSubmission = await submission.findByPk(submission_id)
+      if(!qSubmission) return res.json({
+        "status": false,
+        "message": "submission:not found"
+      })
+
+      if(qSubmission.submission_status != 0) return res.json({
+        "status": false,
+        "message": "submission:already " + (qSubmission.submission_status == 1 ? "approved" : "rejected")
+      })
+
+      let qAbsence = await absence.findByPk(qSubmission.submission_ref_id)
+      if(!qAbsence) return res.json({
+        "status": false,
+        "message": "absence:not found"
+      })
+
+      let qUser = await user.findByPk(authorization_by)
+      if(!qUser) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
+      if(qSubmission.submission_type == 'new'){
+        await submission.update({
+          submission_status: "2",
+          authorization_by: qUser.id,
+          authorization_at: new Date()
+        }, {
+          where: {
+            id: submission_id
+          }
+        })
+
+        await absence.update({
+          absence_status: "2"
+        }, {
+          where: {
+            id: qAbsence.id
+          }
+        })
+      }else if(qSubmission.submission_type == 'cancel'){
+        await submission.update({
+          submission_status: "2",
+          authorization_by: qUser.id,
+          authorization_at: new Date()
+        }, {
+          where: {
+            id: submission_id
+          }
+        })
+      }
+
+      await t.commit();
+      return res.json({
+        "status": true,
+        "message": "absence:reject success",
+      })
+    } catch (error) {
+      await t.rollback();
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
+      })
+    }        
+  }
 }
 
 module.exports = AbsenceController

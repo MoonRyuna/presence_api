@@ -1,6 +1,6 @@
 const { absence_type, user } = require("../../models")
 const Validator = require('validatorjs')
-const Sequelize = require('sequelize');
+const Sequelize = require('sequelize')
 const Op = Sequelize.Op
 
 class AbsenceTypeController {

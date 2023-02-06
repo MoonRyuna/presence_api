@@ -90,7 +90,7 @@ const job = schedule.scheduleJob('0 0 0 1 1 *', async function(){
   const t = await sequelize.transaction();
   try {
     const officeConfig = await office_config.findByPk(1)
-    const annual_leave = officeConfig.amount_of_annual _leave
+    const annual_leave = officeConfig.amount_of_annual_leave
     
     const users = await user.findAll()
     const cYear = moment().format('YYYY')
