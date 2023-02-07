@@ -16,6 +16,7 @@ const AbsenceTypeRouter = require("./routes/api/AbsenceTypeRouter")
 const UserRouter = require('./routes/api/UserRouter')
 const UploadRouter = require('./routes/api/UploadRouter')
 const AbsenceRouter = require('./routes/api/AbsenceRouter')
+const OvertimeRouter = require('./routes/api/OvertimeRouter')
 
 const app = express()
 const swaggerDocument = YAML.load('./docs/collection.yaml')
@@ -72,6 +73,7 @@ app.use(apiVersion, AbsenceTypeRouter)
 app.use(apiVersion, UserRouter)
 app.use(apiVersion, UploadRouter)
 app.use(apiVersion, AbsenceRouter)
+app.use(apiVersion, OvertimeRouter)
 
 app.use((error, req, res, next) => {
   return res.json({

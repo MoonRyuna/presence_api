@@ -71,6 +71,7 @@ class AbsenceController {
     try {
       let absence_id = req.params.id;
       const qAbsence = await absence.findByPk(absence_id)
+
       if(!qAbsence){
         return res.json({
           "status": false,
@@ -162,6 +163,25 @@ class AbsenceController {
 
       const cut_annual_leave = absenceTypeExist?.cut_annual_leave;
       
+      if(cut_annual_leave){
+        const qUserAnnualLeave = await user_annual_leave.findAll({
+          where: {
+            user_id: qAbsence.user_id,
+            year: moment().format('YYYY')
+          }
+        })
+
+        if(qUserAnnualLeave){
+          let qUA = qUserAnnualLeave[0]
+          if(qUA.annual_leave == 0){
+            return res.json({
+              "status": false,
+              "message": "absence:jatah cuti tahun "+moment().format('YYYY')+" habis",
+            })
+          }
+        }
+      }
+
       let qAbsence = await absence.create({
         user_id: user_id,
         absence_at: absence_at,
@@ -296,13 +316,12 @@ class AbsenceController {
             let qUA = qUserAnnualLeave[0]
             if((qUA.annual_leave - 1) == 0){
               return res.json({
-                "status": true,
+                "status": false,
                 "message": "absence:jatah cuti tahun "+moment().format('YYYY')+" habis",
               })
             }
 
             let nAnnualLeave = qUA.annual_leave - 1;
-            console.log('nA', nAnnualLeave)
             await user_annual_leave.update({
               annual_leave: nAnnualLeave
             }, {
@@ -361,7 +380,6 @@ class AbsenceController {
             let qUA = qUserAnnualLeave[0]
 
             let nAnnualLeave = qUA.annual_leave + 1;
-            console.log('nA', nAnnualLeave)
             await user_annual_leave.update({
               annual_leave: nAnnualLeave
             }, {
