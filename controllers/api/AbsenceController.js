@@ -2,9 +2,7 @@ const { absence, submission, user, absence_type, user_annual_leave, sequelize } 
 const Sequelize = require('sequelize')
 const Op = Sequelize.Op
 const Validator = require('validatorjs')
-const { where } = require("sequelize")
 const moment = require("moment")
-const { response } = require("express")
 
 class AbsenceController {
   async list(req, res) {
@@ -96,6 +94,7 @@ class AbsenceController {
       return res.json({
         "status": true,
         "message": "submission:success",
+        "data": qSubmission
       })
     } catch (error) {
       return res.status(500).json({
