@@ -29,6 +29,9 @@ module.exports = {
       amount_of_annual_leave: {
         type: Sequelize.INTEGER
       },
+      cut_off_date: {
+        type: Sequelize.INTEGER
+      },
       work_schedule: {
         type: Sequelize.TEXT
       },

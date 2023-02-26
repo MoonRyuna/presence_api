@@ -17,6 +17,7 @@ module.exports = {
           longitude: 107.55235349704994,
           radius: 2,
           amount_of_annual_leave: 12,
+          cut_off_date: 25,
           work_schedule: '08:00 - 17:00',
           updated_by: 1,  // admin
           updatedAt: new Date()
@@ -32,6 +33,7 @@ module.exports = {
           longitude: 107.55235349704994,
           radius: 2,
           amount_of_annual_leave: 12,
+          cut_off_date: 25,
           work_schedule: '08:00 - 17:00',
           updated_by: 1,  // admin
           updatedAt: new Date()

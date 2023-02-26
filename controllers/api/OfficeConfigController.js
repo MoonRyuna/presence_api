@@ -32,6 +32,7 @@ class OfficeConfigController {
         latitude: 'required',
         longitude: 'required',
         radius: 'required',
+        cut_off_date: 'required',
         amount_of_annual_leave: 'required',
         work_schedule: 'required',
         updated_by: 'required'
@@ -53,6 +54,7 @@ class OfficeConfigController {
         latitude,
         longitude,
         radius,
+        cut_off_date,
         amount_of_annual_leave,
         work_schedule,
         updated_by
@@ -94,6 +96,7 @@ class OfficeConfigController {
         latitude: latitude,
         longitude: longitude,
         radius: radius,
+        cut_off_date: cut_off_date,
         amount_of_annual_leave: amount_of_annual_leave,
         work_schedule: work_schedule,
         updated_by: updated_by,

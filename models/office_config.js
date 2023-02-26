@@ -24,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     latitude: DataTypes.DOUBLE,
     longitude: DataTypes.DOUBLE,
     radius: DataTypes.DOUBLE,
+    cut_off_date: DataTypes.INTEGER,
     amount_of_annual_leave: DataTypes.INTEGER,
     work_schedule: DataTypes.TEXT,
     updated_by: DataTypes.BIGINT,
