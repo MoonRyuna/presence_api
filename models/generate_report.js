@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class generate_report extends Model {
+  class report extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -17,19 +17,19 @@ module.exports = (sequelize, DataTypes) => {
       })
     }
   }
-  generate_report.init({
+  report.init({
     title: DataTypes.TEXT,
     start_date: DataTypes.DATE,
     end_date: DataTypes.DATE,
-    total_employe: DataTypes.INTEGER,
+    total_employee: DataTypes.INTEGER,
     telat: DataTypes.INTEGER,
     generated_by: DataTypes.BIGINT,
     generated_at: DataTypes.DATE
   }, {
     sequelize,
-    modelName: 'generate_report',
+    modelName: 'report',
     timestamps: false,
     freezeTableName: true,
   });
-  return generate_report;
+  return report;
 };
