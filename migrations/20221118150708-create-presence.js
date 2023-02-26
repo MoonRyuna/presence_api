@@ -29,6 +29,12 @@ module.exports = {
       late_amount: {
         type: Sequelize.DOUBLE
       },
+      full_time: {
+        type: Sequelize.BOOLEAN
+      },
+      remaining_hour: {
+        type: Sequelize.DOUBLE
+      },
       overtime: {
         type: Sequelize.BOOLEAN
       },
@@ -37,6 +43,9 @@ module.exports = {
       },
       overtime_end_at: {
         type: Sequelize.DATE
+      },
+      type: {
+        type: Sequelize.TEXT
       },
       user_id: {
         type: Sequelize.BIGINT,

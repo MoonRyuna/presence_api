@@ -1,0 +1,44 @@
+
+# check_in
+- check tgl sudah dilakukan check in
+  - jika sudah check in => beri pesan sudah melakukan presensi masuk
+- check late => compare dari config 
+  - late_amount: => ambil selisih telat dari config
+- ketika check in
+  - set data
+    - check_in: dari json
+    - position_check_in: dari json {lat, lng}
+    - user_id: dari json
+    - late: dari check late func -> isLate
+    - late_amount: dari chec late func -> lateAmount
+
+# check_out
+- check tgl belum dilakukan check in
+  - jika belum check in => beri pesan anda belum melakukan presensi masuk
+- check tgl sudah dilakukan check out
+  - jika sudah check out => beri pesan sudah melakukan presensi keluar
+- jika ada overtime ditanggal check_out tidak bisa checkout harus pakai
+  start start_overtime
+- ketika check-in
+  - check_out: dari json
+  - position_check_out: dari json {lat, lng}
+  - user_id: dari json
+
+# start_overtime
+- check apakah ada data overtime dengan tgl overtime_start_at
+  - jika tidak ada data overtime beri pesan: maaf anda belum mengajukan lembur
+- check tgl sudah dilakukan start overtime
+  - jika sudah start overtime => beri pesan sudah mulai lembur
+- ketika start overtime
+  - set data
+    - overtime_start_at: dari json
+
+
+# end_overtime
+- check tgl sudah dilakukan end overtime
+  - jika sudah => beri pesan anda telah menyelesaikan lembur
+- check tgl belum dilakukan start overtime
+  - jika belum start overtime => beri pesan anda belum memulai lembur
+- ketika end overtime
+  - set data
+    - overtime_end_at: dari json

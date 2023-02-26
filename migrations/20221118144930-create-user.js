@@ -50,6 +50,9 @@ module.exports = {
       device_uid: {
         type: Sequelize.TEXT
       },
+      can_wfh: {
+        type: Sequelize.BOOLEAN
+      },
       deleted: {
         type: Sequelize.BOOLEAN
       },

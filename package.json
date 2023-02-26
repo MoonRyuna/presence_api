@@ -7,7 +7,7 @@
     "test": "jest --verbose",
     "pm2": "pm2 start server.js",
     "stop-pm2": "pm2 stop 0",
-    "start": "node server.js",
+    "start": "nodemon server.js",
     "sq:create": "sequelize db:create",
     "sq:migrate": "sequelize db:migrate",
     "sq:seed": "sequelize db:seed:all"
@@ -26,11 +26,11 @@
     "jest": "^28.1.0",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.3",
+    "moment-timezone": "^0.5.40",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.7.8",
-    "nodemon": "^2.0.20",
     "pg": "^8.8.0",
     "pm2": "^5.2.0",
     "postman-to-openapi": "^2.9.0",
@@ -42,6 +42,7 @@
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
-    "sequelize-cli": "^6.5.1"
+    "sequelize-cli": "^6.5.1",
+    "nodemon": "^2.0.20"
   }
 }

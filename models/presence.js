@@ -15,14 +15,6 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'user_id',
         as: 'user'
       })
-      this.belongsTo(models.user, {
-        foreignKey: 'approved_by',
-        as: 'approver'
-      })
-      this.belongsTo(models.user, {
-        foreignKey: 'rejected_by',
-        as: 'rejector'
-      })
     }
   }
   presence.init({
@@ -33,10 +25,14 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT,
     late: DataTypes.BOOLEAN,
     late_amount: DataTypes.DOUBLE,
+    full_time: DataTypes.BOOLEAN,
+    remaining_hour: DataTypes.DOUBLE,
     overtime: DataTypes.BOOLEAN,
     overtime_start_at: DataTypes.DATE,
     overtime_end_at: DataTypes.DATE,
-    user_id: DataTypes.BIGINT
+    type: DataTypes.TEXT,
+    user_id: DataTypes.BIGINT,
+    idle_amount: DataTypes.DOUBLE
   }, {
     sequelize,
     modelName: 'presence',

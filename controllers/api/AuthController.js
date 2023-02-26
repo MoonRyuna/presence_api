@@ -2,12 +2,15 @@ const { user } = require("../../models")
 const jwt = require('jsonwebtoken')
 const Validator = require('validatorjs')
 const bcrypt = require('bcryptjs')
+const Sequelize = require('sequelize')
+const Op = Sequelize.Op
 
 class AuthController {
   async auth(req, res) {
     let rules = {
       username: 'required|alpha_dash', 
-      password: 'required'
+      password: 'required',
+      imei: 'required'
     }
 
     let validation = new Validator(req.body, rules)
@@ -19,14 +22,39 @@ class AuthController {
       })
     }
 
-    let { username, password } = req.body
+    let { username, password, imei } = req.body
 
     try {
+      let imeiUsed = await user.findOne({
+        where: {
+          imei: imei,
+          [Op.and]: Sequelize.where(Sequelize.col('username'), {
+            [Op.not]: username
+          })
+        }
+      })
+
+      if(imeiUsed){
+        return res.json({
+          "status": false,
+          "message": "imei: sudah tertaut pada akun lain, silakan untuk reset imei"
+        })
+      }
+
       let auth = await user.findOne({
         where: {
           username: username,
         }
       })
+
+      if(auth?.imei){
+        if(auth?.imei != imei){
+          return res.json({
+            "status": false,
+            "message": "imei: berbeda dengan terakhir kali masuk, silakan untuk reset imei"
+          })
+        }
+      }
   
       if(!auth?.username){
         return res.json({
@@ -55,7 +83,10 @@ class AuthController {
         expiresIn: '24h' 
       });
       
-      await user.update({ token: token }, {
+      await user.update({ 
+        imei: imei,
+        token: token 
+      }, {
         where: { id: auth?.id }
       })
 
@@ -78,7 +109,8 @@ class AuthController {
   async desktop_auth(req, res) {
     let rules = {
       username: 'required', 
-      password: 'required'
+      password: 'required',
+      device_uid: 'required',
     }
 
     let validation = new Validator(req.body, rules)
@@ -90,9 +122,25 @@ class AuthController {
       })
     }
 
-    let { username, password } = req.body
+    let { username, password, device_uid } = req.body
 
     try {
+      let deviceUIDUsed = await user.findOne({
+        where: {
+          device_uid: device_uid,
+          [Op.and]: Sequelize.where(Sequelize.col('username'), {
+            [Op.not]: username
+          })
+        }
+      })
+
+      if(deviceUIDUsed){
+        return res.json({
+          "status": false,
+          "message": "device_uid: sudah tertaut pada akun lain, silakan untuk reset device uid"
+        })
+      }
+
       let auth = await user.findOne({
         where: {
           username: username,
@@ -106,6 +154,15 @@ class AuthController {
         })
       }
 
+      if(auth?.device_uid){
+        if(auth?.device_uid != device_uid){
+          return res.json({
+            "status": false,
+            "message": "device_uid: berbeda dengan terakhir kali masuk, silakan untuk reset device uid"
+          })
+        }
+      }
+  
       if(!auth?.username){
         return res.json({
           "status": false,
@@ -130,6 +187,12 @@ class AuthController {
       }
 
       const token = auth?.token
+
+      await user.update({ 
+        device_uid: device_uid,
+      }, {
+        where: { id: auth?.id }
+      })
 
       return res.json({
         "status": true,

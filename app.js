@@ -17,6 +17,7 @@ const UserRouter = require('./routes/api/UserRouter')
 const UploadRouter = require('./routes/api/UploadRouter')
 const AbsenceRouter = require('./routes/api/AbsenceRouter')
 const OvertimeRouter = require('./routes/api/OvertimeRouter')
+const PresenceRouter = require('./routes/api/PresenceRouter')
 
 const app = express()
 const swaggerDocument = YAML.load('./docs/collection.yaml')
@@ -74,6 +75,7 @@ app.use(apiVersion, UserRouter)
 app.use(apiVersion, UploadRouter)
 app.use(apiVersion, AbsenceRouter)
 app.use(apiVersion, OvertimeRouter)
+app.use(apiVersion, PresenceRouter)
 
 app.use((error, req, res, next) => {
   return res.json({
@@ -86,9 +88,7 @@ app.use((error, req, res, next) => {
 const schedule = require('node-schedule');
 const { office_config, user, user_annual_leave, sequelize } = require("./models")
 
-const job = schedule.scheduleJob('0 0 0 1 1 *', async function(){
-  console.log('cron start')
-  
+async function setAnnualLeave(){
   const t = await sequelize.transaction();
   try {
     const officeConfig = await office_config.findByPk(1)
@@ -120,6 +120,14 @@ const job = schedule.scheduleJob('0 0 0 1 1 *', async function(){
     console.log(error)
     await t.rollback()
   }
+}
+
+// run default data
+// setAnnualLeave()
+
+const job = schedule.scheduleJob('0 0 0 1 1 *', async function(){
+  console.log('cron start')
+  setAnnualLeave()
 })
 
 module.exports = app

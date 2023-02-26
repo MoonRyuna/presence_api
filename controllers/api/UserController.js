@@ -102,6 +102,7 @@ class UserController {
       started_work_at: "required",
       device_tracker: "required",
       created_by: "required",
+      can_wfh: "required",
     }     
 
     let validation = new Validator(req.body, rules)
@@ -124,7 +125,8 @@ class UserController {
       started_work_at,
       profile_picture,
       device_tracker,
-      created_by
+      created_by,
+      can_wfh
     } = req.body
 
     const t = await sequelize.transaction();
@@ -193,6 +195,7 @@ class UserController {
         device_tracker: device_tracker,
         created_by: created_by,
         deleted: 0,
+        can_wfh: can_wfh
       })
 
       await t.commit();
@@ -221,6 +224,7 @@ class UserController {
       started_work_at: "required",
       device_tracker: "required",
       updated_by: "required",
+      can_wfh: "required"
     }     
 
     let validation = new Validator(req.body, rules)
@@ -242,7 +246,8 @@ class UserController {
       started_work_at,
       profile_picture,
       device_tracker,
-      updated_by
+      updated_by,
+      can_wfh
     } = req.body
 
     const t = await sequelize.transaction();
@@ -315,6 +320,7 @@ class UserController {
         started_work_at: started_work_at,
         device_tracker: device_tracker,
         updated_by: updated_by,
+        can_wfh: can_wfh
       }
 
       if(profile_picture != ""){
@@ -560,6 +566,118 @@ class UserController {
       return res.json({
         "status": true,
         "message": "user:change password success",
+        "data": data
+      })
+    } catch (error) {
+      await t.rollback();
+      return res.json({
+        "status": false,
+        "message": error.message
+      }) 
+    }
+  }
+
+  async resetImei(req, res) { 
+    let rules = {
+      user_id: 'required',
+    }
+
+    let validation = new Validator(req.body, rules)
+    if(validation.fails()){
+      return res.status(422).json({
+        status: false,
+        message: 'form:is not complete',
+        data: validation.errors.all()
+      })
+    }
+
+    let { 
+      user_id,
+    } = req.body
+
+    const t = await sequelize.transaction();
+    try {
+      const exist = await user.findOne({
+        where: {
+          id: user_id
+        }
+      })
+
+      if(!exist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
+      await user.update({
+        imei: null
+      }, {
+        where: {
+          id: user_id
+        }
+      })
+
+      const data = await user.findOne({where: { id: user_id}})
+
+      await t.commit();
+      return res.json({
+        "status": true,
+        "message": "imei:telah di reset",
+        "data": data
+      })
+    } catch (error) {
+      await t.rollback();
+      return res.json({
+        "status": false,
+        "message": error.message
+      }) 
+    }
+  }
+
+  async resetDeviceUID(req, res) { 
+    let rules = {
+      user_id: 'required',
+    }
+
+    let validation = new Validator(req.body, rules)
+    if(validation.fails()){
+      return res.status(422).json({
+        status: false,
+        message: 'form:is not complete',
+        data: validation.errors.all()
+      })
+    }
+
+    let { 
+      user_id,
+    } = req.body
+
+    const t = await sequelize.transaction();
+    try {
+      const exist = await user.findOne({
+        where: {
+          id: user_id
+        }
+      })
+
+      if(!exist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
+      await user.update({
+        device_uid: null
+      }, {
+        where: {
+          id: user_id
+        }
+      })
+
+      const data = await user.findOne({where: { id: user_id}})
+
+      await t.commit();
+      return res.json({
+        "status": true,
+        "message": "device_uid:telah di reset",
         "data": data
       })
     } catch (error) {

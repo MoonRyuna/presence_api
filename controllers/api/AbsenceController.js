@@ -81,7 +81,10 @@ class AbsenceController {
         where: {
           submission_ref_table: 'absence',
           submission_ref_id: absence_id
-        }
+        }, 
+        include: [
+          { model: user, as: 'authorizer', attributes: [ 'id', 'user_code', 'username', 'name' ] },
+        ]
       })
 
       if(!qSubmission) {
@@ -105,21 +108,32 @@ class AbsenceController {
   }
 
   async findById(req, res) {
-    const t = await sequelize.transaction();
     try {
-      let qRes = await absence.findByPk(req.params.id)
-      await t.commit();
+      const qRes = await absence.findByPk(req.params.id, {
+        include: [
+          { model: user, as: 'user', attributes: [ 'id', 'user_code', 'username', 'name' ] },
+          { model: absence_type, as: 'absence_type', attributes: [ 'id', 'name', 'cut_annual_leave' ] },
+        ]
+      });
+  
+      if (!qRes) {
+        return res.status(404).json({
+          "status": false,
+          "message": "overtime:not found",
+        });
+      }
+  
       return res.json({
         "status": true,
-        "message": "absence:success",
-      })
+        "message": "overtime:success",
+        "data": qRes,
+      });
     } catch (error) {
-      await t.rollback();
       return res.status(500).json({
         "status": false,
         "message": error.message,
-      })
-    }        
+      });
+    }
   }
 
   async submission(req, res) {
@@ -148,6 +162,34 @@ class AbsenceController {
 
     const t = await sequelize.transaction();
     try {
+      // check tgl pengajuan >= tgl sekarang
+      const now = moment().format('YYYY-MM-DD');
+      const absenceAt = moment(absence_at, 'YYYY-MM-DD')
+      if(!absenceAt.isSameOrAfter(now)) {
+        // console.log(absenceAt, now)
+        return res.status(200).json({
+          "status": false,
+          "message": 'tanggal pengajuan harus sama atau lebih dari tanggal sekarang',
+        })
+      }
+
+      // check tidak ada absen hari ini yang pending/approve
+      const countAbsence = await absence.count({
+        where: {
+          absence_status: { [Op.in]: ['0', '1'] },
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${absenceAt.format("YYYY-MM-DD")}%`
+          })
+        },
+      });
+
+      if(countAbsence > 0){
+        return res.status(200).json({
+          "status": false,
+          "message": `sudah ada pengajuan pada tanggal ${absenceAt.format('YYYY-MM-DD')} *(pending/approved)`,
+        })
+      }
+    
       let userExist = await user.findByPk(user_id)
       if(!userExist) return res.json({
         "status": false,
@@ -160,12 +202,12 @@ class AbsenceController {
         "message": "absence_type:not found"
       })
 
+      // check jatah cuti tahunan
       const cut_annual_leave = absenceTypeExist?.cut_annual_leave;
-      
       if(cut_annual_leave){
         const qUserAnnualLeave = await user_annual_leave.findAll({
           where: {
-            user_id: qAbsence.user_id,
+            user_id: user_id,
             year: moment().format('YYYY')
           }
         })
@@ -175,7 +217,7 @@ class AbsenceController {
           if(qUA.annual_leave == 0){
             return res.json({
               "status": false,
-              "message": "absence:jatah cuti tahun "+moment().format('YYYY')+" habis",
+              "message": "jatah cuti tahun "+moment().format('YYYY')+" habis",
             })
           }
         }
@@ -184,7 +226,7 @@ class AbsenceController {
       let qAbsence = await absence.create({
         user_id: user_id,
         absence_at: absence_at,
-        absence_status: 1, //0 = pending, 1 = approved, 2 = rejected, 3 = canceled
+        absence_status: 0, //0 = pending, 1 = approved, 2 = rejected, 3 = canceled, 4 = expired
         absence_type_id: absence_type_id,
         cut_annual_leave: cut_annual_leave,
         desc: desc,
@@ -194,7 +236,7 @@ class AbsenceController {
       await submission.create({
         submission_type: "new", //new, cancel
         submission_at: new Date(),
-        submission_status: 0, //0 = pending, 1 = approved, 2 = rejected
+        submission_status: 0, //0 = pending, 1 = approved, 2 = rejected, 4 = expired
         submission_ref_table: "absence",
         submission_ref_id: qAbsence.id,
       })
@@ -202,7 +244,7 @@ class AbsenceController {
       await t.commit();
       return res.json({
         "status": true,
-        "message": "absence:success",
+        "message": "absence:submission success",
       })
     } catch (error) {
       await t.rollback();
@@ -217,7 +259,7 @@ class AbsenceController {
     let rules = {
       absence_id: "required",
     }     
-
+    
     let validation = new Validator(req.body, rules)
     if(validation.fails()){
       return res.status(422).json({
@@ -226,7 +268,7 @@ class AbsenceController {
         "data": validation.errors.all()
       })
     }
-
+    
     let { absence_id } = req.body
 
     const t = await sequelize.transaction();
@@ -236,6 +278,41 @@ class AbsenceController {
         "status": false,
         "message": "absence:not found"
       })
+
+      // check submission di pengajuan ini tidak ada yang pending
+      const countSubmission = await submission.count({
+        where: {
+          submission_status: '0',
+          submission_ref_table: 'absence',
+          submission_ref_id: absence_id
+        }
+      })
+
+      if(countSubmission){
+        return res.status(200).json({
+          "status": false,
+          "message": 'silakan selesaikan pengajuan sebelumnya',
+        })
+      }
+
+      // check pengajuan status 1
+      // console.log(qAbsence)
+      if(qAbsence.absence_status != '1'){
+        return res.status(200).json({
+          "status": false,
+          "message": 'pengajuan yang di cancel harus berstatus 1 *(approved)',
+        })
+      }
+
+      // check tgl pengajuan > tgl sekarang
+      const now = moment().format('YYYY-MM-DD')
+      const absenceAt = moment(qAbsence.absence_at)
+      if(absenceAt.startOf('day').isBefore(now)) {
+        return res.status(200).json({
+          "status": false,
+          "message": 'cancel tidak dapat dilakukan karena telah melebihi hari ini',
+        })
+      }
 
       await submission.create({
         submission_type: "cancel", //new, cancel
@@ -248,7 +325,7 @@ class AbsenceController {
       await t.commit();
       return res.json({
         "status": true,
-        "message": "absence:success",
+        "message": "absence:cancel success",
       })
     }
     catch (error) {
@@ -303,6 +380,7 @@ class AbsenceController {
       })
 
       if(qSubmission.submission_type == 'new'){
+        // check tgl pengajuan > tgl sekarang
         if(qAbsence.cut_annual_leave){
           const qUserAnnualLeave = await user_annual_leave.findAll({
             where: {
@@ -367,6 +445,7 @@ class AbsenceController {
             id: qAbsence.id
           }
         })
+
         if(qAbsence.cut_annual_leave){
           const qUserAnnualLeave = await user_annual_leave.findAll({
             where: {
