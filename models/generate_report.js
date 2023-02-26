@@ -21,9 +21,10 @@ module.exports = (sequelize, DataTypes) => {
     title: DataTypes.TEXT,
     start_date: DataTypes.DATE,
     end_date: DataTypes.DATE,
+    total_employe: DataTypes.INTEGER,
+    telat: DataTypes.INTEGER,
     generated_by: DataTypes.BIGINT,
-    generated_at: DataTypes.DATE,
-    total_employe: DataTypes.INTEGER
+    generated_at: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'generate_report',

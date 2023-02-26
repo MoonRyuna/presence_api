@@ -26,20 +26,15 @@ module.exports = {
       izin_lainnya: {
         type: Sequelize.INTEGER
       },
+      telat: {
+        type: Sequelize.INTEGER
+      },
       wfh: {
         type: Sequelize.INTEGER
       },
       wfo: {
         type: Sequelize.INTEGER
       },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE
-      }
     });
   },
   async down(queryInterface, Sequelize) {
