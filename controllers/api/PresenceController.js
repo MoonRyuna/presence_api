@@ -279,8 +279,8 @@ class PresenceController {
       let remainingHour = 0;
       let officeConfigExist = await office_config.findAll();
       if(officeConfigExist[0] != undefined){
-        gCheckIn = gCheckIn[0]
         officeConfigExist = officeConfigExist[0]
+        gCheckIn = gCheckIn[0]
         let workSchedule = officeConfigExist.work_schedule;
         workSchedule = workSchedule.split(" ");
 

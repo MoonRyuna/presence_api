@@ -11,6 +11,9 @@ module.exports = {
       title: {
         type: Sequelize.TEXT
       },
+      total_employee: {
+        type: Sequelize.INTEGER
+      },
       start_date: {
         type: Sequelize.DATE
       },
@@ -22,9 +25,6 @@ module.exports = {
       },
       generated_at: {
         type: Sequelize.DATE
-      },
-      total_employee: {
-        type: Sequelize.INTEGER
       },
     });
   },

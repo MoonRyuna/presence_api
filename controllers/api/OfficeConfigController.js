@@ -64,6 +64,13 @@ class OfficeConfigController {
 
     const t = await sequelize.transaction();
     try {
+      if(cut_off_date < 1 || cut_off_date > 28){
+        return res.json({
+          "status": false,
+          "message": "cut_off_date:hanya boleh 1-28"
+        })
+      }
+
       let officeConfig = await office_config.findOne({
         where: {
           id: id,
