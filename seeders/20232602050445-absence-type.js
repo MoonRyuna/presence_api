@@ -27,7 +27,7 @@ module.exports = {
         },
         {
           name: "Acara Keluarga",
-          cut_annual_leave: true,
+          cut_annual_leave: false,
           created_by: 1,
           updated_by: 1,
           deleted_by: null,

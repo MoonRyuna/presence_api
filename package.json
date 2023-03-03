@@ -15,6 +15,7 @@
   "author": "Ari Ardiansyah",
   "license": "MIT",
   "dependencies": {
+    "@google-cloud/local-auth": "2.1.0",
     "bcrypt": "^5.1.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
@@ -23,10 +24,11 @@
     "ejs": "^3.1.6",
     "express": "^4.17.3",
     "express-session": "^1.17.2",
+    "googleapis": "105",
     "jest": "^28.1.0",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.3",
-    "moment-timezone": "^0.5.40",
+    "moment-timezone": "^0.5.41",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "node-schedule": "^2.1.1",
@@ -42,7 +44,7 @@
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
-    "sequelize-cli": "^6.5.1",
-    "nodemon": "^2.0.20"
+    "nodemon": "^2.0.20",
+    "sequelize-cli": "^6.5.1"
   }
 }

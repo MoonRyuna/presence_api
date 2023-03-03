@@ -1,8 +1,10 @@
-const { office_config, user, presence, sequelize, overtime, report } = require("../../models")
+const { office_config, user, presence, sequelize, overtime, absence, absence_type, report, report_summary } = require("../../models")
 const Sequelize = require('sequelize')
 const Op = Sequelize.Op
 const Validator = require('validatorjs')
 const moment = require("moment")
+
+const { getWorkingDays } = require("../../utils/CalendarCommon")
 
 class ReportController {
   async list(req, res) {
@@ -86,6 +88,7 @@ class ReportController {
       generated_by
     } = req.body
 
+    const t = await sequelize.transaction();
     try {
       if(parseInt(month_report) < 1 || parseInt(month_report) > 12){
         return res.json({
@@ -143,12 +146,14 @@ class ReportController {
         total_employee: countEmployee
       })
 
+      await t.commit();
       return res.json({
         "status": true,
         "message": "report:created success",
         "data": qRes
       })
     } catch (error) {
+      await t.rollback();
       return res.json({
         "status": false,
         "message": error.message
@@ -157,7 +162,206 @@ class ReportController {
   }
 
   async generate(req, res) {
+    let id = req.params.id
+    const t = await sequelize.transaction();
+    try {
+      let reportExist = await report.findOne({
+        where: {
+          id: id
+        }
+      })
 
+      if(!reportExist) return res.json({
+        "status": false,
+        "message": "report:not found"
+      })
+
+      let start_date = reportExist.start_date
+      let end_date = reportExist.end_date
+
+      console.log('start_date', start_date)
+      console.log('end_date', end_date)
+
+      //get hari kerja dari range waktu start - end date
+      let hariKerja = await getWorkingDays(start_date, end_date)
+      console.log("hari kerja", hariKerja)
+
+      let listKaryawan = await user.findAll({
+        where: {
+          account_type: "karyawan",
+          deleted: false
+        }
+      })
+
+      let idSakit = [];
+      let idCuti = [];
+      let idLainnya = [];
+
+      const absenceTypeSakit = await absence_type.findAll({
+        where: {
+          name: {
+            [Op.iLike]: '%sakit%'
+          }
+        }
+      });
+
+      if(absenceTypeSakit){
+        idSakit = absenceTypeSakit.map(data => data.id);
+      }
+
+      const absenceTypeCuti = await absence_type.findAll({
+        where: {
+          cut_annual_leave: true
+        }
+      });
+      
+      if(absenceTypeCuti){
+        idCuti = absenceTypeCuti.map(data => data.id);
+      }
+
+      const absenceTypeLainnya = await absence_type.findAll({
+        where: {
+          name: {
+            [Op.notILike]: '%sakit%'
+          },
+          cut_annual_leave: false
+        }      
+      })
+
+      if(absenceTypeLainnya){
+        idLainnya = absenceTypeLainnya.map(data => data.id);
+      }
+
+      console.log('idSakit', idSakit)
+      console.log('idCuti', idCuti)
+      console.log('idLainnya', idLainnya)
+
+      let report_summary = []
+      if(listKaryawan){
+        for(let karyawan of listKaryawan){
+          let detail = {
+            user_id: karyawan.id,
+            hadir: hariKerja.length,
+            tanpa_keterangan: 0,
+            cuti: 0,
+            sakit: 0,
+            izin_lainnya: 0,
+            telat: 0,
+            wfh: 0,
+            wfo: 0,
+            lembur: 0
+          }
+
+          for(let tgl of hariKerja){
+            let isAbsence = false;
+            console.log('nama: ', karyawan.name)
+            console.log('tgl: ', tgl)
+            tgl = moment(tgl)
+            
+            console.log('check cuti')
+            const countCuti = await absence.count({
+              where: {
+                absence_status: '1',
+                absence_type_id: { [Op.in]: idCuti },
+                user_id: karyawan.id,
+                [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
+                  [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+                })
+              },
+            });
+            console.log("cuti", countCuti)
+            if(countCuti) detail.cuti = detail.cuti + 1;
+            
+            console.log('check sakit')
+            const countSakit = await absence.count({
+              where: {
+                absence_status: '1',
+                absence_type_id: { [Op.in]: idSakit },
+                user_id: karyawan.id,
+                [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
+                  [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+                })
+              },
+            });
+            console.log("sakit", countSakit)
+            if(countSakit) detail.sakit = detail.sakit + 1;
+
+            console.log('check izin lainnya')
+            const countLainnya = await absence.count({
+              where: {
+                absence_status: '1',
+                absence_type_id: { [Op.in]: idLainnya },
+                user_id: karyawan.id,
+                [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
+                  [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+                })
+              },
+            });
+            console.log("lainnya", countLainnya)
+            if(countLainnya) detail.izin_lainnya = detail.izin_lainnya + 1;
+
+            //
+            if(countSakit || countCuti || countLainnya) {
+              isAbsence = true
+            }
+
+            const rPresence = await presence.findOne({
+              where: {
+                user_id: karyawan.id,
+                [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('check_in'), 'YYYY-MM-DD'), {
+                  [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+                })
+              },
+            });
+            
+            console.log("rPresence", rPresence)
+            if(rPresence){
+              console.log('check telat')
+              if(rPresence.late) detail.telat = detail.telat + 1;
+  
+              console.log('check wfh')
+              if(rPresence.type == 'wfh') detail.wfh = detail.wfh + 1; 
+              
+              console.log('check wfo')
+              if(rPresence.type == 'wfh') detail.wfo = detail.wfo + 1; 
+  
+              console.log('check lembur')
+              const countLembur = await overtime.count({
+                where: {
+                  overtime_status: '1',
+                  user_id: karyawan.id,
+                  [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_at'), 'YYYY-MM-DD'), {
+                    [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+                  })
+                },
+              });
+              if(countLembur) detail.lembur = detail.lembur + 1;
+            }else{
+              if(!isAbsence){
+                detail.tanpa_keterangan = detail.tanpa_keterangan + 1;
+              }
+              detail.hadir = detail.hadir - 1;
+            }
+            console.log('detail', detail)
+          }
+
+          report_summary.push(detail)
+        }
+      }
+
+      await t.commit();
+      return res.json({
+        "status": true,
+        "message": "report:generated success",
+        "data": report_summary
+      })
+    } catch (error) {
+      await t.rollback();
+      return res.json({
+        "status": false,
+        "message": error.message
+      }) 
+    }
   }
 
   async downloadPdf(req, res) {

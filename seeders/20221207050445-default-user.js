@@ -48,6 +48,48 @@ module.exports = {
           deleted_by: null,
           createdAt: new Date(),
           updatedAt: new Date()
+        },
+        { 
+          user_code: '12.001',
+          username: 'ari',
+          password: await bcrypt.hash('rahasia', saltRounds),
+          token: null,
+          email: 'ari@dak.co.id',
+          account_type: 'karyawan',
+          name: 'Ari Ardiansyah',
+          address: 'Jl. Rancakasiat',
+          description: 'Fullstack Programmer',
+          started_work_at: '2018-12-07',
+          profile_picture: 'images/default.png',
+          device_tracker: false,
+          can_wfh: true,
+          deleted: false,
+          created_by: 1,
+          updated_by: 1,
+          deleted_by: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        { 
+          user_code: '12.002',
+          username: 'kinfjr',
+          password: await bcrypt.hash('rahasia', saltRounds),
+          token: null,
+          email: 'kinfjr@dak.co.id',
+          account_type: 'karyawan',
+          name: 'Rizky Nugraha',
+          address: 'Cililin',
+          description: 'Fullstack Programmer',
+          started_work_at: '2021-03-07',
+          profile_picture: 'images/default.png',
+          device_tracker: false,
+          can_wfh: true,
+          deleted: false,
+          created_by: 1,
+          updated_by: 1,
+          deleted_by: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
         }
       ]);
     } catch (error) {
