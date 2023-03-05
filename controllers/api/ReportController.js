@@ -239,7 +239,7 @@ class ReportController {
       let report_summary = []
       if(listKaryawan){
         for(let karyawan of listKaryawan){
-          let detail = {
+          let summary = {
             user_id: karyawan.id,
             hadir: hariKerja.length,
             tanpa_keterangan: 0,
@@ -270,7 +270,7 @@ class ReportController {
               },
             });
             console.log("cuti", countCuti)
-            if(countCuti) detail.cuti = detail.cuti + 1;
+            if(countCuti) summary.cuti = summary.cuti + 1;
             
             console.log('check sakit')
             const countSakit = await absence.count({
@@ -284,7 +284,7 @@ class ReportController {
               },
             });
             console.log("sakit", countSakit)
-            if(countSakit) detail.sakit = detail.sakit + 1;
+            if(countSakit) summary.sakit = summary.sakit + 1;
 
             console.log('check izin lainnya')
             const countLainnya = await absence.count({
@@ -298,7 +298,7 @@ class ReportController {
               },
             });
             console.log("lainnya", countLainnya)
-            if(countLainnya) detail.izin_lainnya = detail.izin_lainnya + 1;
+            if(countLainnya) summary.izin_lainnya = summary.izin_lainnya + 1;
 
             //
             if(countSakit || countCuti || countLainnya) {
@@ -317,13 +317,13 @@ class ReportController {
             console.log("rPresence", rPresence)
             if(rPresence){
               console.log('check telat')
-              if(rPresence.late) detail.telat = detail.telat + 1;
+              if(rPresence.late) summary.telat = summary.telat + 1;
   
               console.log('check wfh')
-              if(rPresence.type == 'wfh') detail.wfh = detail.wfh + 1; 
+              if(rPresence.type == 'wfh') summary.wfh = summary.wfh + 1; 
               
               console.log('check wfo')
-              if(rPresence.type == 'wfh') detail.wfo = detail.wfo + 1; 
+              if(rPresence.type == 'wfh') summary.wfo = summary.wfo + 1; 
   
               console.log('check lembur')
               const countLembur = await overtime.count({
@@ -335,17 +335,17 @@ class ReportController {
                   })
                 },
               });
-              if(countLembur) detail.lembur = detail.lembur + 1;
+              if(countLembur) summary.lembur = summary.lembur + 1;
             }else{
               if(!isAbsence){
-                detail.tanpa_keterangan = detail.tanpa_keterangan + 1;
+                summary.tanpa_keterangan = summary.tanpa_keterangan + 1;
               }
-              detail.hadir = detail.hadir - 1;
+              summary.hadir = summary.hadir - 1;
             }
-            console.log('detail', detail)
+            console.log('summary', summary)
           }
 
-          report_summary.push(detail)
+          report_summary.push(summary)
         }
       }
 
