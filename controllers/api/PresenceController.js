@@ -381,7 +381,7 @@ class PresenceController {
         })
       }
 
-      //check apakah sudah sudah check out?
+      //check apakah sudah check out?
       const countCheckOut = await presence.count({
         where: {
           user_id: user_id,
@@ -398,7 +398,7 @@ class PresenceController {
         })
       }
 
-      //check apakah sudah sudah check out?
+      //check apakah sudah check out?
       const countStartOvertime = await presence.count({
         where: {
           user_id: user_id,
@@ -479,7 +479,7 @@ class PresenceController {
         })
       }
 
-      //check apakah sudah sudah check out?
+      //check apakah sudah check out?
       const countEndOvertime = await presence.count({
         where: {
           user_id: user_id,
@@ -502,6 +502,161 @@ class PresenceController {
         where: {
           user_id: user_id,
           [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('check_in'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${overtimeEndAt.format("YYYY-MM-DD")}%`
+          })
+        }
+      })
+      //
+      await t.commit();
+      return res.json({
+        "status": true,
+        "message": "mengakhiri lembur berhasil",
+      })
+    } catch (error) {
+      await t.rollback();
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
+      })
+    }     
+  }
+
+  async startHolidayOvertime(req, res) {
+    let rules = {
+      user_id: "required",
+      overtime_start_at: "required"
+    }     
+
+    let validation = new Validator(req.body, rules)
+    if(validation.fails()){
+      return res.status(422).json({
+        "status": false,
+        "message": 'form:is not complete',
+        "data": validation.errors.all()
+      })
+    }
+
+    let { user_id, overtime_start_at } = req.body
+
+    const t = await sequelize.transaction();
+    try {
+      const overtimeStartAt = moment(overtime_start_at, 'YYYY-MM-DD')
+      // check tidak ada overtime hari ini yang aktif
+      const countOvertime = await overtime.count({
+        where: {
+          overtime_status: { [Op.in]: ['1'] },
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_at'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${overtimeStartAt.format("YYYY-MM-DD")}%`
+          })
+        },
+      });
+
+      if(countOvertime == 0){
+        return res.status(200).json({
+          "status": false,
+          "message": `belum mengajukan lembur (${overtimeStartAt.format('YYYY-MM-DD')})`,
+        })
+      }
+
+      //check apakah sudah mulai lembur?
+      const countStartOvertime = await presence.count({
+        where: {
+          user_id: user_id,
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_start_at'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${overtimeStartAt.format("YYYY-MM-DD")}%`
+          })
+        },
+      });
+
+      if(countStartOvertime > 0){
+        return res.status(200).json({
+          "status": false,
+          "message": `sudah memulai lembur (${overtimeStartAt.format('YYYY-MM-DD')})`,
+        })
+      }
+
+      await presence.create({
+        user_id: user_id,
+        overtime_start_at: overtime_start_at,
+        overtime: true
+      })
+
+      //
+      await t.commit();
+      return res.json({
+        "status": true,
+        "message": "memulai lembur berhasil",
+      })
+    } catch (error) {
+      await t.rollback();
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
+      })
+    }        
+  }
+
+  async endHolidayOvertime(req, res) {
+    let rules = {
+      user_id: "required",
+      overtime_end_at: "required"
+    }     
+
+    let validation = new Validator(req.body, rules)
+    if(validation.fails()){
+      return res.status(422).json({
+        "status": false,
+        "message": 'form:is not complete',
+        "data": validation.errors.all()
+      })
+    }
+
+    let { user_id, overtime_end_at } = req.body
+
+    const t = await sequelize.transaction();
+    try {
+      const overtimeEndAt = moment(overtime_end_at, 'YYYY-MM-DD')
+
+      //check apakah sudah sudah start overtime?
+      const countCheckOut = await presence.count({
+        where: {
+          user_id: user_id,
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_start_at'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${overtimeEndAt.format("YYYY-MM-DD")}%`
+          })
+        },
+      });
+
+      if(countCheckOut == 0){
+        return res.status(200).json({
+          "status": false,
+          "message": `belum memulai lembur (${overtimeEndAt.format('YYYY-MM-DD')})`,
+        })
+      }
+
+      //check apakah sudah check out?
+      const countEndOvertime = await presence.count({
+        where: {
+          user_id: user_id,
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_end_at'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${overtimeEndAt.format("YYYY-MM-DD")}%`
+          })
+        },
+      });
+
+      if(countEndOvertime > 0){
+        return res.status(200).json({
+          "status": false,
+          "message": `sudah mengakhiri lembur (${overtimeEndAt.format('YYYY-MM-DD')})`,
+        })
+      }
+
+      await presence.update({
+        overtime_end_at: overtime_end_at,
+      }, {
+        where: {
+          user_id: user_id,
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_start_at'), 'YYYY-MM-DD'), {
             [Op.iLike]: `%${overtimeEndAt.format("YYYY-MM-DD")}%`
           })
         }

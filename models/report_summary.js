@@ -33,6 +33,8 @@ module.exports = (sequelize, DataTypes) => {
     wfh: DataTypes.INTEGER,
     wfo: DataTypes.INTEGER,
     lembur: DataTypes.INTEGER,
+    fulltime: DataTypes.INTEGER,
+    hari_kerja: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'report_summary',

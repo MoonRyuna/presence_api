@@ -23,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'user_id',
         as: 'overtimes'
       })
+      this.hasOne(models.user_annual_leave, {
+        foreignKey: 'user_id',
+        as: 'user_annual_leave'
+      })
     }
   }
   

@@ -25,6 +25,9 @@ const swaggerDocument = YAML.load('./docs/collection.yaml')
 
 const apiVersion = '/api/v1'
 
+//Set view engine
+app.set('view engine', 'ejs');
+
 //Setup Log
 const originalSend = app.response.send
 app.response.send = function sendOverWrite(body) {
@@ -61,7 +64,7 @@ app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:htt
 app.use(cors())
 app.use(express.json())
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
-app.use('/public', express.static(path.join(__dirname, 'uploads')))
+app.use('/public', express.static(path.join(__dirname, 'public')))
 app.get('/', (req, res) => {
     res.json({
         'message': 'welcome to presence api',

@@ -53,6 +53,12 @@ module.exports = {
       lembur: {
         type: Sequelize.INTEGER
       },
+      fulltime: {
+        type: Sequelize.INTEGER
+      },
+      hari_kerja: {
+        type: Sequelize.INTEGER
+      },
     });
   },
   async down(queryInterface, Sequelize) {
