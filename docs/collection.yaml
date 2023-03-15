@@ -1,29 +1,63 @@
 openapi: 3.0.0
 info:
-  title: CBS-SIMULATOR-NODEJS
+  title: PRESENCE-API
   version: 1.0.0
 servers:
   - url: http://localhost:3000
-  - url: https://va-ms-4.prodak.id
 components:
   securitySchemes:
+    noauthAuth:
+      type: http
+      scheme: noauth
     bearerAuth:
       type: http
       scheme: bearer
+tags:
+  - name: AUTH
+  - name: OFFICE CONFIG
+  - name: ABSENCE TYPE
+  - name: USER
+  - name: UPLOAD
+  - name: ABSENCE
+  - name: OVERTIME
+  - name: PRESENCE
+  - name: REPORT
 paths:
-  /auth:
+  /api/v1/auth:
     post:
       tags:
-        - General
-      summary: Authentication
+        - AUTH
+      summary: AUTH
       requestBody:
         content:
           application/json:
             schema:
               type: object
               example:
-                username: client
+                username: admin
+                password: admin
+                imei: '23829300092021'
+      security:
+        - noauthAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/desktop_auth:
+    post:
+      tags:
+        - AUTH
+      summary: DESKTOP AUTH
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                username: wow123
                 password: rahasia
+                device_uid: x213
       security:
         - bearerAuth: []
       responses:
@@ -31,22 +65,11 @@ paths:
           description: Successful response
           content:
             application/json: {}
-  /cifinfoinquiry:
-    post:
+  /api/v1/office_config:
+    get:
       tags:
-        - General
-      summary: CIF Info Inquiry
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              example:
-                transDateTime: '220715075932'
-                bankId: '20'
-                cif: '0000007348'
-                stan: '010595'
-                rrn: '010480000001'
+        - OFFICE CONFIG
+      summary: GET
       security:
         - bearerAuth: []
       responses:
@@ -54,22 +77,72 @@ paths:
           description: Successful response
           content:
             application/json: {}
-  /accountinquiry:
+  /api/v1/office_config/update/{id}:
     post:
       tags:
-        - General
-      summary: Account Inquiry
+        - OFFICE CONFIG
+      summary: UPDATE
       requestBody:
         content:
           application/json:
             schema:
               type: object
               example:
-                transDateTime: '220715075932'
-                bankId: '20'
-                cif: '0000007348'
-                stan: '010595'
-                rrn: '010480000001'
+                name: PT. Digital Amore Kriyanesia
+                theme: default
+                logo: images/default-logo.png
+                latitude: -7.01137531169352
+                longitude: 107.55235349704994
+                radius: 2
+                cut_off_date: 25
+                amount_of_annual_leave: 12
+                work_schedule: 08:00 - 17:00
+                updated_by: '1'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence_type:
+    get:
+      tags:
+        - ABSENCE TYPE
+      summary: LIST
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - ABSENCE TYPE
+      summary: CREATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: sakit
+                cut_annual_leave: false
+                created_by: 1
       security:
         - bearerAuth: []
       responses:
@@ -77,26 +150,899 @@ paths:
           description: Successful response
           content:
             application/json: {}
-  /fundtransfer:
-    post:
+  /api/v1/absence_type/{id}:
+    get:
       tags:
-        - General
-      summary: Fund Transfer
+        - ABSENCE TYPE
+      summary: FIND BY ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    put:
+      tags:
+        - ABSENCE TYPE
+      summary: UPDATE
       requestBody:
         content:
           application/json:
             schema:
               type: object
               example:
-                transDateTime: '220715075932'
-                fromAccount: '801111000122'
-                nominal: '10000'
-                nomorVA: '00005'
-                keterangan: pembayaran
-                stan: '010595'
-                rrn: '010480000001'
+                name: cuti tahunan (edit2)
+                cut_annual_leave: true
+                updated_by: 1
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - ABSENCE TYPE
+      summary: DELETE
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence_type/soft/{id}:
+    delete:
+      tags:
+        - ABSENCE TYPE
+      summary: SOFT DELETE
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence_type/restore/{id}:
+    post:
+      tags:
+        - ABSENCE TYPE
+      summary: RESTORE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                deleted_by: '1'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user:
+    get:
+      tags:
+        - USER
+      summary: LIST
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+        - name: deleted
+          in: query
+          schema:
+            type: boolean
+          example: 'false'
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: createdAt:desc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - USER
+      summary: CREATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                username: kinfjr
+                password: rahasia
+                password_confirmation: rahasia
+                token: '-'
+                email: kinfjr@gmail.com
+                account_type: karyawan
+                name: Rizky Nugraha
+                address: Cililin
+                description: full stack programmer
+                started_work_at: '2020-08-10'
+                profile_picture: images/image-1671440725752-611127637.png
+                device_tracker: true
+                can_wfh: true
+                created_by: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user/{id}:
+    get:
+      tags:
+        - USER
+      summary: FIND BY ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    put:
+      tags:
+        - USER
+      summary: UPDATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                username: wow123
+                email: wow123@mail.com
+                account_type: karyawan
+                name: Ujang Udin (edit)
+                address: Jl. Suka Suka (edit)
+                description: '- (edit)'
+                started_work_at: '2020-08-11'
+                profile_picture: images/image-1671437005045-635988428.png
+                device_tracker: true
+                can_wfh: true
+                updated_by: 1
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '3'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - USER
+      summary: DELETE
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '10'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user/change_password/{id}:
+    put:
+      tags:
+        - USER
+      summary: CHANGE PASSWORD
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                old_password: admin
+                new_password: rahasia123
+                new_password_confirmation: rahasia123
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '3'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user/soft/{id}:
+    delete:
+      tags:
+        - USER
+      summary: SOFT DELETE
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '11'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user/restore/{id}:
+    post:
+      tags:
+        - USER
+      summary: RESTORE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                deleted_by: '1'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '11'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user/reset_imei:
+    post:
+      tags:
+        - USER
+      summary: RESET IMEI
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: '3'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user/reset_device_uid:
+    post:
+      tags:
+        - USER
+      summary: RESET DEVICE UID
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: '3'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/upload/image:
+    post:
+      tags:
+        - UPLOAD
+      summary: IMAGE
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/upload/attachment:
+    post:
+      tags:
+        - UPLOAD
+      summary: ATTACHMENT
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence:
+    get:
+      tags:
+        - ABSENCE
+      summary: LIST
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence/{id}:
+    get:
+      tags:
+        - ABSENCE
+      summary: DETAIL
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence/submission/{absence_id}:
+    get:
+      tags:
+        - ABSENCE
+      summary: LIST SUBMISSION
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: absence_id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence/submission:
+    post:
+      tags:
+        - ABSENCE
+      summary: SUBMISSION
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 3
+                absence_at: '2023-03-14'
+                absence_type_id: 1
+                desc: Sakit karena kemarin kehujanan
+                attachment: ''
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence/approve:
+    post:
+      tags:
+        - ABSENCE
+      summary: APPROVE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                submission_id: 2
+                authorization_by: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence/cancel:
+    post:
+      tags:
+        - ABSENCE
+      summary: CANCEL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                absence_id: '1'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence/reject:
+    post:
+      tags:
+        - ABSENCE
+      summary: REJECT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                submission_id: 2
+                authorization_by: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/overtime:
+    get:
+      tags:
+        - OVERTIME
+      summary: LIST
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/overtime/{id}:
+    get:
+      tags:
+        - OVERTIME
+      summary: DETAIL
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/overtime/submission/{overtime}:
+    get:
+      tags:
+        - OVERTIME
+      summary: LIST SUBMISSION
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: overtime
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/overtime/submission:
+    post:
+      tags:
+        - OVERTIME
+      summary: SUBMISSION
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 3
+                overtime_at: '2023-03-20'
+                desc: Kerjaan harus dilanjut
+                attachment: ''
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/overtime/cancel:
+    post:
+      tags:
+        - OVERTIME
+      summary: CANCEL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                overtime_id: '1'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/overtime/approve:
+    post:
+      tags:
+        - OVERTIME
+      summary: APPROVE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                submission_id: 5
+                authorization_by: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/overtime/reject:
+    post:
+      tags:
+        - OVERTIME
+      summary: REJECT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                submission_id: 12
+                authorization_by: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/presence:
+    get:
+      tags:
+        - PRESENCE
+      summary: LIST
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/presence/check_in:
+    post:
+      tags:
+        - PRESENCE
+      summary: CHECK IN
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 3
+                check_in: '2023-03-20 8:00:00'
+                position_check_in:
+                  lat: '0'
+                  lng: '0'
+                type: wfh
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/presence/check_out:
+    post:
+      tags:
+        - PRESENCE
+      summary: CHECK OUT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 3
+                check_out: '2023-03-20 17:00:00'
+                position_check_out:
+                  lat: '0'
+                  lng: '0'
+                description: Pekerjaan selesai
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/presence/start_overtime:
+    post:
+      tags:
+        - PRESENCE
+      summary: START OVERTIME
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 3
+                overtime_start_at: '2023-03-20 19:00:00'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/presence/end_overtime:
+    post:
+      tags:
+        - PRESENCE
+      summary: END OVERTIME
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 3
+                overtime_end_at: '2023-03-20 22:00:00'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/presence/start_holiday_overtime:
+    post:
+      tags:
+        - PRESENCE
+      summary: START HOLIDAY OVERTIME
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 3
+                overtime_start_at: '2023-03-11 7:00:00'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/presence/end_holiday_overtime:
+    post:
+      tags:
+        - PRESENCE
+      summary: END HOLIDAY OVERTIME
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 3
+                overtime_end_at: '2023-03-11 13:00:00'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/report:
+    get:
+      tags:
+        - REPORT
+      summary: LIST
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/report/create:
+    post:
+      tags:
+        - REPORT
+      summary: CREATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                title: Report Maret
+                month_report: '3'
+                year_report: '2023'
+                generated_by: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/report/generate/{id}:
+    post:
+      tags:
+        - REPORT
+      summary: GENERATE
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example: ''
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/report/download_excel/{id}:
+    get:
+      tags:
+        - REPORT
+      summary: DOWNLOAD EXCEL
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '1'
       responses:
         '200':
           description: Successful response
