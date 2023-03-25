@@ -23,7 +23,7 @@ class Mailer {
     return this
   }
 
-  send(){
+  async send(){
     return this.transport.sendMail(this.mail);
   }
 

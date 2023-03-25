@@ -23,6 +23,9 @@ module.exports = {
       email: {
         type: Sequelize.TEXT
       },
+      phone_number: {
+        type: Sequelize.TEXT
+      },
       account_type: {
         type: Sequelize.TEXT
       },
@@ -52,6 +55,9 @@ module.exports = {
       },
       can_wfh: {
         type: Sequelize.BOOLEAN
+      },
+      otp: {
+        type: Sequelize.TEXT
       },
       deleted: {
         type: Sequelize.BOOLEAN

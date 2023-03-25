@@ -95,6 +95,7 @@ class UserController {
       username: "required|alpha_dash",
       password: "required|alpha_dash|confirmed",
       email: "required|email",
+      phone_number: "required",
       account_type: "required",
       name: "required",
       address: "required",
@@ -118,6 +119,7 @@ class UserController {
       username,
       password,
       email,
+      phone_number,
       account_type,
       name,
       address,
@@ -162,6 +164,17 @@ class UserController {
       if(emailExist) return res.json({
         "status": false,
         "message": "user:email already exist"
+      })
+
+      let phoneNumberExist = await user.findOne({
+        where: {
+          phone_number: phone_number
+        }
+      })
+
+      if(phoneNumberExist) return res.json({
+        "status": false,
+        "message": "user:phone number already exist"
       })
       
       const rulesAccountType = ['admin', 'hrd', 'karyawan']
@@ -217,6 +230,7 @@ class UserController {
     let rules = {
       username: "required|alpha_dash",
       email: "required|email",
+      phone_number: "required",
       account_type: "required",
       name: "required",
       address: "required",
@@ -239,6 +253,7 @@ class UserController {
     let {
       username,
       email,
+      phone_number,
       account_type,
       name,
       address,
@@ -300,6 +315,20 @@ class UserController {
       if(emailExist) return res.json({
         "status": false,
         "message": "user:email already exist"
+      })
+
+      let phoneNumberExist = await user.findOne({
+        where: {
+          phone_number: phone_number,
+          id: {
+            [Op.not]: req.params.id 
+          }
+        }
+      })
+
+      if(phoneNumberExist) return res.json({
+        "status": false,
+        "message": "user:phone number already exist"
       })
 
       const rulesAccountType = ['admin', 'hrd', 'karyawan']
@@ -512,7 +541,7 @@ class UserController {
       }) 
     }
   }
-
+  
   async changePassword(req, res) { 
     let rules = {
       old_password: 'required',
