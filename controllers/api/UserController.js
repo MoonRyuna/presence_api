@@ -4,6 +4,7 @@ const Validator = require('validatorjs')
 const bcrypt = require('bcrypt')
 const fs = require('fs')
 const Sequelize = require('sequelize')
+const { setAnnualLeave } = require('../../utils/CronCommon') 
 const Op = Sequelize.Op
 const saltRounds = 10
 
@@ -199,6 +200,7 @@ class UserController {
         username: username,
         password: await bcrypt.hash(password, saltRounds),
         email: email,
+        phone_number: phone_number,
         account_type: account_type,
         name: name,
         address: address,
@@ -210,6 +212,8 @@ class UserController {
         deleted: 0,
         can_wfh: can_wfh
       })
+
+      await setAnnualLeave();
 
       await t.commit();
       return res.json({
@@ -342,6 +346,7 @@ class UserController {
       let updateData = {
         username: username,
         email: email,
+        phone_number: phone_number,
         account_type: account_type,
         name: name,
         address: address,
