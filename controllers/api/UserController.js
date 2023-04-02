@@ -1,12 +1,13 @@
-const { user, sequelize } = require("../../models")
+const { user, user_annual_leave, presence, absence, office_config, overtime, sequelize } = require("../../models")
 const { GenerateUserCode, GetPrefixUserCode } = require('../../utils/GenerateCode')
 const Validator = require('validatorjs')
 const bcrypt = require('bcrypt')
 const fs = require('fs')
 const Sequelize = require('sequelize')
-const { setAnnualLeave } = require('../../utils/CronCommon') 
+const { setAnnualLeave } = require('../../utils/CronCommon')
 const Op = Sequelize.Op
 const saltRounds = 10
+const moment = require("moment")
 
 class UserController {
   async list(req, res) {
@@ -18,18 +19,18 @@ class UserController {
       let offset = (page - 1) * limit
 
       let qWhere = {}
-      if(req.query.name) qWhere.name = { [Op.iLike]: `%${req.query.name}%` }
-      if(req.query.user_code) qWhere.user_code = { [Op.iLike]: `%${req.query.user_code}%` }
-      if(req.query.deleted) qWhere.deleted = req.query.deleted
+      if (req.query.name) qWhere.name = { [Op.iLike]: `%${req.query.name}%` }
+      if (req.query.user_code) qWhere.user_code = { [Op.iLike]: `%${req.query.user_code}%` }
+      if (req.query.deleted) qWhere.deleted = req.query.deleted
 
       let qOrder = []
-      if(req.query.order != undefined){
+      if (req.query.order != undefined) {
         let order = req.query.order.split(',')
-        if(order.length > 0){
+        if (order.length > 0) {
           order.forEach((o) => {
             let obj = o.split(':')
-            if(obj.length > 0) {
-              if(obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
+            if (obj.length > 0) {
+              if (obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
             }
           })
         }
@@ -66,7 +67,7 @@ class UserController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async findById(req, res) {
@@ -105,10 +106,10 @@ class UserController {
       device_tracker: "required",
       created_by: "required",
       can_wfh: "required",
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -133,14 +134,14 @@ class UserController {
     } = req.body
 
     const t = await sequelize.transaction();
-    try{
+    try {
       let userExist = await user.findOne({
         where: {
           id: created_by
         }
       })
 
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -151,7 +152,7 @@ class UserController {
         }
       })
 
-      if(usernameExist) return res.json({
+      if (usernameExist) return res.json({
         "status": false,
         "message": "user:username already exist"
       })
@@ -162,7 +163,7 @@ class UserController {
         }
       })
 
-      if(emailExist) return res.json({
+      if (emailExist) return res.json({
         "status": false,
         "message": "user:email already exist"
       })
@@ -173,13 +174,13 @@ class UserController {
         }
       })
 
-      if(phoneNumberExist) return res.json({
+      if (phoneNumberExist) return res.json({
         "status": false,
         "message": "user:phone number already exist"
       })
-      
+
       const rulesAccountType = ['admin', 'hrd', 'karyawan']
-      if(!rulesAccountType.includes(account_type)){
+      if (!rulesAccountType.includes(account_type)) {
         return res.json({
           "status": false,
           "message": "user:account type not valid (must be: admin, hrd, karyawan)"
@@ -190,8 +191,8 @@ class UserController {
         where: { user_code: { [Op.iLike]: `${GetPrefixUserCode(account_type)}%` } }
       })
       let user_code = await GenerateUserCode(GetPrefixUserCode(account_type), lastCode)
-      
-      if(!profile_picture){
+
+      if (!profile_picture) {
         profile_picture = 'images/default.png'
       }
 
@@ -243,10 +244,10 @@ class UserController {
       device_tracker: "required",
       updated_by: "required",
       can_wfh: "required"
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -270,14 +271,14 @@ class UserController {
     } = req.body
 
     const t = await sequelize.transaction();
-    try{
+    try {
       let userExist = await user.findOne({
         where: {
           id: updated_by
         }
       })
 
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -288,7 +289,7 @@ class UserController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -297,12 +298,12 @@ class UserController {
         where: {
           username: username,
           id: {
-            [Op.not]: req.params.id 
+            [Op.not]: req.params.id
           }
         }
       })
 
-      if(usernameExist) return res.json({
+      if (usernameExist) return res.json({
         "status": false,
         "message": "user:username already exist"
       })
@@ -311,12 +312,12 @@ class UserController {
         where: {
           email: email,
           id: {
-            [Op.not]: req.params.id 
+            [Op.not]: req.params.id
           }
         }
       })
 
-      if(emailExist) return res.json({
+      if (emailExist) return res.json({
         "status": false,
         "message": "user:email already exist"
       })
@@ -325,18 +326,18 @@ class UserController {
         where: {
           phone_number: phone_number,
           id: {
-            [Op.not]: req.params.id 
+            [Op.not]: req.params.id
           }
         }
       })
 
-      if(phoneNumberExist) return res.json({
+      if (phoneNumberExist) return res.json({
         "status": false,
         "message": "user:phone number already exist"
       })
 
       const rulesAccountType = ['admin', 'hrd', 'karyawan']
-      if(!rulesAccountType.includes(account_type)){
+      if (!rulesAccountType.includes(account_type)) {
         return res.json({
           "status": false,
           "message": "user:account type not valid (must be: admin, hrd, karyawan)"
@@ -357,27 +358,27 @@ class UserController {
         can_wfh: can_wfh
       }
 
-      if(profile_picture != ""){
+      if (profile_picture != "") {
         updateData.profile_picture = profile_picture
       }
-      
+
       await user.update(updateData, {
         where: { id: req.params.id }
       })
 
       //delete old picture
-      if(profile_picture != "" && 
-        exist.profile_picture != "" && 
-        exist.profile_picture != profile_picture && 
-        exist.profile_picture != 'images/default.png'){ 
+      if (profile_picture != "" &&
+        exist.profile_picture != "" &&
+        exist.profile_picture != profile_picture &&
+        exist.profile_picture != 'images/default.png') {
         const file = `public/${exist.profile_picture}`
-        if(fs.existsSync(file)){
+        if (fs.existsSync(file)) {
           fs.unlinkSync(file)
         }
       }
 
-      const data = await user.findOne({where: { id: req.params.id}})
-      
+      const data = await user.findOne({ where: { id: req.params.id } })
+
       await t.commit();
       return res.json({
         "status": true,
@@ -402,11 +403,11 @@ class UserController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "user:not found"
       })
-      
+
       await user.destroy({
         where: {
           id: req.params.id
@@ -414,9 +415,9 @@ class UserController {
       })
 
       //delete picture
-      if((exist.profile_picture != "" || exist.profile_picture) && exist.profile_picture != 'images/default.png'){ 
+      if ((exist.profile_picture != "" || exist.profile_picture) && exist.profile_picture != 'images/default.png') {
         const file = `public/${exist.profile_picture}`
-        if(fs.existsSync(file)){
+        if (fs.existsSync(file)) {
           fs.unlinkSync(file)
         }
       }
@@ -427,13 +428,13 @@ class UserController {
         "message": "user:deleted success",
         "data": exist
       })
-      
+
     } catch (error) {
       await t.rollback();
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
@@ -443,7 +444,7 @@ class UserController {
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -451,7 +452,7 @@ class UserController {
       })
     }
 
-    let { 
+    let {
       deleted_by
     } = req.body
 
@@ -463,7 +464,7 @@ class UserController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -474,7 +475,7 @@ class UserController {
         }
       })
 
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -488,9 +489,9 @@ class UserController {
           id: req.params.id
         }
       })
-      
-      const data = await user.findOne({where: { id: req.params.id}})
-      
+
+      const data = await user.findOne({ where: { id: req.params.id } })
+
       await t.commit();
       return res.json({
         "status": true,
@@ -502,7 +503,7 @@ class UserController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
@@ -515,7 +516,7 @@ class UserController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -530,7 +531,7 @@ class UserController {
         }
       })
 
-      const data = await user.findOne({where: { id: req.params.id}})
+      const data = await user.findOne({ where: { id: req.params.id } })
 
       await t.commit();
       return res.json({
@@ -543,18 +544,18 @@ class UserController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
-  
-  async changePassword(req, res) { 
+
+  async changePassword(req, res) {
     let rules = {
       old_password: 'required',
       new_password: 'required|alpha_dash|confirmed|min:6',
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -562,7 +563,7 @@ class UserController {
       })
     }
 
-    let { 
+    let {
       old_password,
       new_password,
     } = req.body
@@ -575,13 +576,13 @@ class UserController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "user:not found"
       })
 
       const passwordMatch = await bcrypt.compare(old_password, exist?.password);
-      if(!passwordMatch) return res.json({
+      if (!passwordMatch) return res.json({
         "status": false,
         "message": "user:old password not match"
       })
@@ -594,7 +595,7 @@ class UserController {
         }
       })
 
-      const data = await user.findOne({where: { id: req.params.id}})
+      const data = await user.findOne({ where: { id: req.params.id } })
 
       await t.commit();
       return res.json({
@@ -607,17 +608,17 @@ class UserController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
-  async resetImei(req, res) { 
+  async resetImei(req, res) {
     let rules = {
       user_id: 'required',
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -625,7 +626,7 @@ class UserController {
       })
     }
 
-    let { 
+    let {
       user_id,
     } = req.body
 
@@ -637,7 +638,7 @@ class UserController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -650,7 +651,7 @@ class UserController {
         }
       })
 
-      const data = await user.findOne({where: { id: user_id}})
+      const data = await user.findOne({ where: { id: user_id } })
 
       await t.commit();
       return res.json({
@@ -663,17 +664,17 @@ class UserController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
-  async resetDeviceUID(req, res) { 
+  async resetDeviceUID(req, res) {
     let rules = {
       user_id: 'required',
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -681,7 +682,7 @@ class UserController {
       })
     }
 
-    let { 
+    let {
       user_id,
     } = req.body
 
@@ -693,7 +694,7 @@ class UserController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -706,7 +707,7 @@ class UserController {
         }
       })
 
-      const data = await user.findOne({where: { id: user_id}})
+      const data = await user.findOne({ where: { id: user_id } })
 
       await t.commit();
       return res.json({
@@ -719,7 +720,109 @@ class UserController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
+    }
+  }
+
+  async dashboard1(req, res) {
+    const t = await sequelize.transaction();
+    try {
+      let rules = {
+        date: "required",
+      }
+
+      let validation = new Validator(req.body, rules)
+      if (validation.fails()) {
+        return res.status(422).json({
+          "status": false,
+          "message": 'form:is not complete',
+          "data": validation.errors.all()
+        })
+      }
+
+      let { date } = req.body
+      let token = req.headers.authorization
+      token = token.split(" ")[1]
+      const mDate = moment(date, 'YYYY-MM-DD')
+
+      let userRes = await user.findOne({
+        where: {
+          token: token
+        },
+        include: [
+          { model: user_annual_leave, as: 'user_annual_leave', attributes: ['year', 'annual_leave'] },
+        ]
+      })
+
+      const presenceRes = await presence.findOne({
+        where: {
+          user_id: userRes.id,
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('check_in'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${mDate.format("YYYY-MM-DD")}%`
+          })
+        },
+      });
+
+      let checkIn = "-";
+      let checkOut = "-";
+      if (presenceRes?.check_in) {
+        if (presenceRes?.check_in != '') {
+          checkIn = moment(presenceRes.check_in).format('YYYY-MM-DD HH:mm:ss');
+        }
+      }
+      if (presenceRes?.check_out) {
+        if (presenceRes?.check_out != '') {
+          checkOut = moment(presenceRes.check_out).format('YYYY-MM-DD HH:mm:ss');
+        }
+      }
+
+      const officeConfigRes = await office_config.findOne({
+        where: {
+          id: 1
+        }
+      })
+
+      const absenceRes = await absence.findOne({
+        where: {
+          absence_status: { [Op.in]: ['1'] },
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${mDate.format("YYYY-MM-DD")}%`
+          })
+        },
+      });
+
+      const overtimeRes = await overtime.findOne({
+        where: {
+          overtime_status: { [Op.in]: ['1'] },
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_at'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${mDate.format("YYYY-MM-DD")}%`
+          })
+        },
+      });
+
+      let obj = {
+        user: userRes,
+        presence: {
+          checkIn: checkIn,
+          checkOut: checkOut
+        },
+        absence: absenceRes,
+        overtime: overtimeRes,
+        officeConfig: officeConfigRes,
+      }
+
+      await t.commit();
+      return res.json({
+        "status": true,
+        "message": "success",
+        "data": obj
+      })
+    } catch (error) {
+      await t.rollback();
+      return res.json({
+        "status": false,
+        "message": error.message
+      })
     }
   }
 }
