@@ -8,6 +8,8 @@ const { setAnnualLeave } = require('../../utils/CronCommon')
 const Op = Sequelize.Op
 const saltRounds = 10
 const moment = require("moment")
+const { getHoliday } = require("../../utils/CalendarCommon")
+
 
 class UserController {
   async list(req, res) {
@@ -754,6 +756,14 @@ class UserController {
         ]
       })
 
+      //check if user not exist
+      if (!userRes) {
+        return res.json({
+          "status": false,
+          "message": "user:not found"
+        })
+      }
+
       const presenceRes = await presence.findOne({
         where: {
           user_id: userRes.id,
@@ -763,8 +773,8 @@ class UserController {
         },
       });
 
-      let checkIn = "-";
-      let checkOut = "-";
+      let checkIn = null;
+      let checkOut = null;
       if (presenceRes?.check_in) {
         if (presenceRes?.check_in != '') {
           checkIn = moment(presenceRes.check_in).format('YYYY-MM-DD HH:mm:ss');
@@ -782,7 +792,7 @@ class UserController {
         }
       })
 
-      const absenceRes = await absence.findOne({
+      const absenceRes = await absence.count({
         where: {
           absence_status: { [Op.in]: ['1'] },
           [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
@@ -791,7 +801,7 @@ class UserController {
         },
       });
 
-      const overtimeRes = await overtime.findOne({
+      const overtimeRes = await overtime.count({
         where: {
           overtime_status: { [Op.in]: ['1'] },
           [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_at'), 'YYYY-MM-DD'), {
@@ -802,13 +812,13 @@ class UserController {
 
       let obj = {
         user: userRes,
-        presence: {
-          checkIn: checkIn,
-          checkOut: checkOut
+        presensi: {
+          check_in: checkIn,
+          check_out: checkOut
         },
-        absence: absenceRes,
-        overtime: overtimeRes,
-        officeConfig: officeConfigRes,
+        izin: absenceRes,
+        lembur: overtimeRes,
+        office_config: officeConfigRes,
       }
 
       await t.commit();
@@ -823,6 +833,166 @@ class UserController {
         "status": false,
         "message": error.message
       })
+    }
+  }
+
+  async todayCheck(req, res) {
+    const t = await sequelize.transaction();
+
+    try {
+      const rules = {
+        date: "required",
+      };
+
+      const validation = new Validator(req.body, rules);
+
+      if (validation.fails()) {
+        return res.status(422).json({
+          status: false,
+          message: "form is not complete",
+          data: validation.errors.all(),
+        });
+      }
+
+      const { date } = req.body;
+      let token = req.headers.authorization
+      token = token.split(" ")[1]
+
+      let userRes = await user.findOne({
+        where: {
+          token: token
+        },
+        include: [
+          { model: user_annual_leave, as: 'user_annual_leave', attributes: ['year', 'annual_leave'] },
+        ]
+      })
+
+      //check if user not exist
+      if (!userRes) {
+        return res.json({
+          "status": false,
+          "message": "user:not found"
+        })
+      }
+
+      const mDate = moment(date, "YYYY-MM-DD");
+
+      console.log('date1', mDate.format('YYYY-MM-DD'));
+
+      // Proses
+      const obj = {
+        date: mDate.format("YYYY-MM-DD"),
+        is_weekend: mDate.isoWeekday() > 5, // Cek apakah sabtu atau minggu
+        is_holiday: false, // Nilai awal is_holiday adalah false
+        holiday_title: [],
+        is_workday: true, // Nilai awal is_workday adalah true
+        already_check_in: false,
+        already_check_out: false,
+        is_absence: false,
+        have_overtime: false,
+        already_overtime_started: false,
+        already_overtime_ended: false
+      };
+
+      // Cek apakah tanggal merah
+      console.log('date2', mDate.format('YYYY-MM-DD'));
+      let startDate = mDate.format('YYYY-MM-DD');
+      console.log('startDate', startDate);
+      let endDate = moment(startDate);
+      endDate = endDate.add('1', 'days').format('YYYY-MM-DD')
+      console.log('endDate', endDate);
+
+      console.log('date3', mDate.format('YYYY-MM-DD'));
+
+      const holidays = await getHoliday(startDate, endDate);
+      obj.is_holiday = holidays.length > 0;
+      if (obj.is_holiday) {
+        holidays.forEach((title) => {
+          obj.holiday_title.push(title.summary)
+        })
+      }
+
+      // Jika bukan weekend atau hari libur, cek apakah hari kerja
+      if (!obj.is_weekend && !obj.is_holiday) {
+        const dayOfWeek = mDate.isoWeekday();
+        obj.is_workday = dayOfWeek >= 1 && dayOfWeek <= 5;
+      } else {
+        obj.is_workday = false; // Tidak bekerja jika weekend atau hari libur
+      }
+
+
+      // Get presence by date
+      const qPresence = await presence.findOne({
+        where: {
+          user_id: userRes.id,
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('check_in'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${mDate.format("YYYY-MM-DD")}%`
+          })
+        }
+      })
+
+      console.log("presence", qPresence)
+      if (qPresence) {
+        if (qPresence?.check_in) {
+          obj.already_check_in = true
+        }
+
+        if (qPresence?.check_out) {
+          obj.already_check_out = true
+        }
+      }
+
+      // Get absence by date
+      const qAbsence = await absence.findOne({
+        where: {
+          user_id: userRes.id,
+          absence_status: { [Op.in]: ['1'] },
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${mDate.format("YYYY-MM-DD")}%`
+          })
+        }
+      })
+
+      if (qAbsence) {
+        obj.is_absence = true
+      }
+
+      // Get overtime by date
+      const qOvertime = await overtime.findOne({
+        where: {
+          user_id: userRes.id,
+          overtime_status: { [Op.in]: ['1'] },
+          [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_at'), 'YYYY-MM-DD'), {
+            [Op.iLike]: `%${mDate.format("YYYY-MM-DD")}%`
+          })
+        }
+      })
+
+      if (qOvertime) {
+        obj.have_overtime = true
+        if (qPresence?.overtime_start_at) {
+          obj.already_overtime_started = true
+        }
+        if (qPresence?.overtime_end_at) {
+          obj.already_overtime_ended = true
+        }
+      }
+
+      await t.commit();
+
+      return res.json({
+        status: true,
+        message: "success",
+        data: obj,
+      });
+    } catch (error) {
+      await t.rollback();
+      console.log(error);
+
+      return res.json({
+        status: false,
+        message: error.message,
+      });
     }
   }
 }

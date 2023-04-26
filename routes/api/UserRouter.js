@@ -15,5 +15,6 @@ router.put('/user/change_password/:id', AuthMiddleware.check, ctl.changePassword
 router.post('/user/reset_imei', AuthMiddleware.check, ctl.resetImei)
 router.post('/user/reset_device_uid', AuthMiddleware.check, ctl.resetDeviceUID)
 router.post('/user/dashboard1', AuthMiddleware.check, ctl.dashboard1)
+router.post('/user/today_check', AuthMiddleware.check, ctl.todayCheck)
 
 module.exports = router
