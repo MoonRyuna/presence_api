@@ -11,13 +11,13 @@ const salt = 10
 class AuthController {
   async auth(req, res) {
     let rules = {
-      username: 'required|alpha_dash', 
+      username: 'required|alpha_dash',
       password: 'required',
       imei: 'required'
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -37,7 +37,7 @@ class AuthController {
         }
       })
 
-      if(imeiUsed){
+      if (imeiUsed) {
         return res.json({
           "status": false,
           "message": "imei: sudah tertaut pada akun lain, silakan untuk reset imei"
@@ -50,23 +50,23 @@ class AuthController {
         }
       })
 
-      if(auth?.imei){
-        if(auth?.imei != imei){
+      if (auth?.imei) {
+        if (auth?.imei != imei) {
           return res.json({
             "status": false,
             "message": "imei: berbeda dengan terakhir kali masuk, silakan untuk reset imei"
           })
         }
       }
-  
-      if(!auth?.username){
+
+      if (!auth?.username) {
         return res.json({
           "status": false,
           "message": "username:not found"
         })
       }
 
-      if(auth?.deletedAt != null){
+      if (auth?.deletedAt != null) {
         return res.json({
           "status": false,
           "message": "user: telah di nonaktifkan"
@@ -75,7 +75,7 @@ class AuthController {
 
       const passwordIsValid = await bcrypt.compare(password, auth?.password);
 
-      if(!passwordIsValid) {
+      if (!passwordIsValid) {
         return res.json({
           "status": false,
           "message": "password:not match"
@@ -88,14 +88,14 @@ class AuthController {
         updatedBy: auth.updatedBy,
         generate: new Date(),
       }
-      
-      let token = jwt.sign({ data: payload}, process.env.JWT_PRIVATE_KEY, {
-        expiresIn: '24h' 
+
+      let token = jwt.sign({ data: payload }, process.env.JWT_PRIVATE_KEY, {
+        expiresIn: '24h'
       });
-      
-      await user.update({ 
+
+      await user.update({
         imei: imei,
-        token: token 
+        token: token,
       }, {
         where: { id: auth?.id }
       })
@@ -104,7 +104,8 @@ class AuthController {
         "status": true,
         "message": "auth:success",
         "data": {
-          "token": token
+          "token": token,
+          "account_type": auth.account_type
         }
       })
 
@@ -112,19 +113,19 @@ class AuthController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
   async desktop_auth(req, res) {
     let rules = {
-      username: 'required', 
+      username: 'required',
       password: 'required',
       device_uid: 'required',
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -144,7 +145,7 @@ class AuthController {
         }
       })
 
-      if(deviceUIDUsed){
+      if (deviceUIDUsed) {
         return res.json({
           "status": false,
           "message": "device_uid: sudah tertaut pada akun lain, silakan untuk reset device uid"
@@ -156,31 +157,31 @@ class AuthController {
           username: username,
         }
       })
-      
-      if(auth?.device_tracker == false) {
+
+      if (auth?.device_tracker == false) {
         return res.json({
           "status": false,
           "message": "device_tracker:disabled"
         })
       }
 
-      if(auth?.device_uid){
-        if(auth?.device_uid != device_uid){
+      if (auth?.device_uid) {
+        if (auth?.device_uid != device_uid) {
           return res.json({
             "status": false,
             "message": "device_uid: berbeda dengan terakhir kali masuk, silakan untuk reset device uid"
           })
         }
       }
-  
-      if(!auth?.username){
+
+      if (!auth?.username) {
         return res.json({
           "status": false,
           "message": "username:not found"
         })
       }
 
-      if(auth?.deletedAt != null){
+      if (auth?.deletedAt != null) {
         return res.json({
           "status": false,
           "message": "user: telah di nonaktifkan"
@@ -189,14 +190,14 @@ class AuthController {
 
       const passwordIsValid = await bcrypt.compare(password, auth?.password);
 
-      if(!passwordIsValid) {
+      if (!passwordIsValid) {
         return res.json({
           "status": false,
           "message": "password:password invalid"
         })
       }
 
-      if(!auth?.token || auth?.token == null){
+      if (!auth?.token || auth?.token == null) {
         return res.json({
           "status": false,
           "message": "token:not found"
@@ -205,7 +206,7 @@ class AuthController {
 
       const token = auth?.token
 
-      await user.update({ 
+      await user.update({
         device_uid: device_uid,
       }, {
         where: { id: auth?.id }
@@ -223,27 +224,27 @@ class AuthController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
   async forgot_password(req, res) {
     try {
-      let {email} = req.body
+      let { email } = req.body
 
-      if(!email){
+      if (!email) {
         return res.status(400).json({
           'message': 'validasi: email tidak boleh kosong'
         })
       }
-      let checkUser = await user.findOne({where: {email: email }})
+      let checkUser = await user.findOne({ where: { email: email } })
 
-      if(!checkUser?.email){
+      if (!checkUser?.email) {
         return res.status(200).json({
           'message': 'user: email not found'
         })
       }
-    
+
       let otp = genOTP(6)
 
       await user.update({
@@ -280,11 +281,11 @@ class AuthController {
       otpHtml += '<p>Silakan gunakan OTP di bawah ini:</p>\n';
       otpHtml += '<div id="otp-container">\n';
       for (let i = 0; i < otpArray.length; i++) {
-          otpHtml += `<div class="box">${otpArray[i]}</div>\n`;
+        otpHtml += `<div class="box">${otpArray[i]}</div>\n`;
       }
       otpHtml += '</div>\n';
       otpHtml += '</body>\n</html>';
-      
+
       mailer.prepare({
         to: email,
         subject: 'OTP untuk Ubah Password',
@@ -294,39 +295,39 @@ class AuthController {
       await mailer.send()
 
       return res.status(200).json({
-        'status':  true,
+        'status': true,
         'message': 'silakan cek email'
       })
-      
+
     } catch (error) {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
-  async verify_otp(req, res){
-    try{
-      let {email, otp} = req.body
+  async verify_otp(req, res) {
+    try {
+      let { email, otp } = req.body
 
-      if(!email && !otp){
+      if (!email && !otp) {
         return res.status(400).json({
           'status': false,
           'message': 'validasi: email atau otp tidak boleh kosong'
         })
       }
 
-      let userCheck = await user.findOne({where: {email: email }})
+      let userCheck = await user.findOne({ where: { email: email } })
       console.log(userCheck)
 
-      if(!userCheck?.email){
+      if (!userCheck?.email) {
         return res.status(200).json({
           'message': 'user: email not found'
         })
       }
-      
-      if(userCheck.otp != otp){
+
+      if (userCheck.otp != otp) {
         return res.status(200).json({
           'status': false,
           'message': 'otp yang di masukan tidak cocok',
@@ -352,28 +353,28 @@ class AuthController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
-  async change_password(req, res){
-    try{
-      let {id, password} = req.body
-  
-      if(!id && !password){
+  async change_password(req, res) {
+    try {
+      let { id, password } = req.body
+
+      if (!id && !password) {
         return res.status(400).json({
           'message': 'validasi: id atau password baru tidak boleh kosong'
         })
       }
-  
-      let userCheck = await user.findOne({where: {id: id }})
-  
-      if(!userCheck?.username){
+
+      let userCheck = await user.findOne({ where: { id: id } })
+
+      if (!userCheck?.username) {
         return res.status(200).json({
           'message': 'user: not found'
         })
       }
-      
+
       await user.update({
         password: bcrypt.hashSync(password, salt)
       }, {
@@ -381,7 +382,7 @@ class AuthController {
           id: userCheck.id
         }
       })
-  
+
       return res.status(200).json({
         'status': true,
         'message': 'password berhasil diubah',
@@ -390,7 +391,7 @@ class AuthController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 }

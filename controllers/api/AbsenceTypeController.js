@@ -12,18 +12,18 @@ class AbsenceTypeController {
       let offset = (page - 1) * limit
 
       let qWhere = {}
-      if(req.query.name) qWhere.name = { [Op.iLike]: `%${req.query.name}%` }
-      if(req.query.deleted) qWhere.deleted = req.query.deleted
+      if (req.query.name) qWhere.name = { [Op.iLike]: `%${req.query.name}%` }
+      if (req.query.deleted) qWhere.deleted = req.query.deleted
 
-      
+
       let qOrder = []
-      if(req.query.order != undefined){
+      if (req.query.order != undefined) {
         let order = req.query.order.split(',')
-        if(order.length > 0){
+        if (order.length > 0) {
           order.forEach((o) => {
             let obj = o.split(':')
-            if(obj.length > 0) {
-              if(obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
+            if (obj.length > 0) {
+              if (obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
             }
           })
         }
@@ -57,7 +57,24 @@ class AbsenceTypeController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
+    }
+  }
+
+  async all(req, res) {
+    try {
+      let qRes = await absence_type.findAll()
+
+      return res.json({
+        "status": true,
+        "message": "absence_type:success",
+        "data": qRes
+      })
+    } catch (error) {
+      return res.json({
+        "status": false,
+        "message": error.message
+      })
     }
   }
 
@@ -78,7 +95,7 @@ class AbsenceTypeController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
@@ -90,7 +107,7 @@ class AbsenceTypeController {
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -98,7 +115,7 @@ class AbsenceTypeController {
       })
     }
 
-    let { 
+    let {
       name,
       cut_annual_leave,
       created_by
@@ -111,7 +128,7 @@ class AbsenceTypeController {
         }
       })
 
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -131,7 +148,7 @@ class AbsenceTypeController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
@@ -143,7 +160,7 @@ class AbsenceTypeController {
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -151,7 +168,7 @@ class AbsenceTypeController {
       })
     }
 
-    let { 
+    let {
       name,
       cut_annual_leave,
       updated_by
@@ -164,7 +181,7 @@ class AbsenceTypeController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "absence_type:not found"
       })
@@ -175,7 +192,7 @@ class AbsenceTypeController {
         }
       })
 
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -190,7 +207,7 @@ class AbsenceTypeController {
         }
       })
 
-      const data = await absence_type.findOne({where: { id: req.params.id}})
+      const data = await absence_type.findOne({ where: { id: req.params.id } })
 
       return res.json({
         "status": true,
@@ -201,7 +218,7 @@ class AbsenceTypeController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
@@ -213,7 +230,7 @@ class AbsenceTypeController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "absence_type:not found"
       })
@@ -233,7 +250,7 @@ class AbsenceTypeController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
@@ -243,7 +260,7 @@ class AbsenceTypeController {
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -251,7 +268,7 @@ class AbsenceTypeController {
       })
     }
 
-    let { 
+    let {
       deleted_by
     } = req.body
 
@@ -262,7 +279,7 @@ class AbsenceTypeController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "absence_type:not found"
       })
@@ -273,7 +290,7 @@ class AbsenceTypeController {
         }
       })
 
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -288,8 +305,8 @@ class AbsenceTypeController {
         }
       })
 
-      const data = await absence_type.findOne({where: { id: req.params.id}})
-      
+      const data = await absence_type.findOne({ where: { id: req.params.id } })
+
       return res.json({
         "status": true,
         "message": "absence_type:deleted success",
@@ -299,7 +316,7 @@ class AbsenceTypeController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
@@ -311,7 +328,7 @@ class AbsenceTypeController {
         }
       })
 
-      if(!exist) return res.json({
+      if (!exist) return res.json({
         "status": false,
         "message": "absence_type:not found"
       })
@@ -326,7 +343,7 @@ class AbsenceTypeController {
         }
       })
 
-      const data = await absence_type.findOne({where: { id: req.params.id}})
+      const data = await absence_type.findOne({ where: { id: req.params.id } })
 
       return res.json({
         "status": true,
@@ -337,7 +354,7 @@ class AbsenceTypeController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 }

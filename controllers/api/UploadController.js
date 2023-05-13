@@ -1,10 +1,18 @@
 class UploadController {
   async image(req, res) {
-    return res.json({
-      "status": true,
-      "message": "image uploaded",
-      "data": req.file
-    })
+    console.log(req.file)
+    try {
+      return res.json({
+        "status": true,
+        "message": "image uploaded",
+        "data": req.file
+      })
+    } catch (error) {
+      return res.json({
+        "status": true,
+        "message": error.message,
+      })
+    }
   }
 
   async document(req, res) {

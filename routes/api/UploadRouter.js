@@ -3,7 +3,7 @@ const router = express.Router()
 const UploadController = require('../../controllers/api/UploadController')
 const ctl = new UploadController()
 const AuthMiddleware = require('../../middlewares/AuthMiddleware')
-const multer  = require('multer')
+const multer = require('multer')
 
 const storageImage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -25,12 +25,13 @@ const storageDocument = multer.diskStorage({
   }
 })
 
-const uploadImage = multer({ 
+const uploadImage = multer({
   storage: storageImage,
-  limits: {
-    fileSize: 1024 * 1024 * 1 //10 MB
-  },
+  // limits: {
+  //   fileSize: 1024 * 1024 * 1 //10 MB
+  // },
   fileFilter: (req, file, cb) => {
+    console.log("ini adalah type " + file.mimetype)
     if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
       cb(null, true);
     } else {
@@ -39,11 +40,11 @@ const uploadImage = multer({
     }
   },
 })
-const uploadDocument = multer({ 
+const uploadDocument = multer({
   storage: storageDocument,
-  limits: {
-    fileSize: 1024 * 1024 * 1 //10 MB
-  },
+  // limits: {
+  //   fileSize: 1024 * 1024 * 1 //10 MB
+  // },
   fileFilter: (req, file, cb) => {
     if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg" || file.mimetype == "application/pdf") {
       cb(null, true);

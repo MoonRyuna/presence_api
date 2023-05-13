@@ -53,6 +53,7 @@ class PresenceController {
           "next_page": +next_page,
           "prev_page": +prev_page,
           "limit": +limit,
+          
           "result": qRes,
         }
       })

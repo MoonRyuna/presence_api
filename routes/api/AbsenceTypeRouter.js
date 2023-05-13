@@ -4,6 +4,7 @@ const AbsenceTypeController = require('../../controllers/api/AbsenceTypeControll
 const ctl = new AbsenceTypeController()
 const AuthMiddleware = require('../../middlewares/AuthMiddleware')
 
+router.get('/absence_type/all', AuthMiddleware.check, ctl.all)
 router.get('/absence_type', AuthMiddleware.check, ctl.list)
 router.get('/absence_type/:id', AuthMiddleware.check, ctl.findById)
 router.post('/absence_type', AuthMiddleware.check, ctl.create)
