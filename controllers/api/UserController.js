@@ -922,7 +922,7 @@ class UserController {
 
 
       // Get presence by date
-      const qPresence = await presence.findOne({
+      let qPresence = await presence.findOne({
         where: {
           user_id: userRes.id,
           [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('check_in'), 'YYYY-MM-DD'), {
@@ -970,6 +970,16 @@ class UserController {
 
       if (qOvertime) {
         obj.have_overtime = true
+        if (obj.is_weekend || obj.is_holiday) {
+          qPresence = await presence.findOne({
+            where: {
+              user_id: userRes.id,
+              [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_start_at'), 'YYYY-MM-DD'), {
+                [Op.iLike]: `%${mDate.format("YYYY-MM-DD")}%`
+              })
+            }
+          })
+        }
         if (qPresence?.overtime_start_at) {
           obj.already_overtime_started = true
         }
