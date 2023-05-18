@@ -13,17 +13,17 @@ class PresenceController {
       let offset = (page - 1) * limit
 
       let qWhere = {}
-      if(req.query.user_id) qWhere.user_id = req.query.user_id
-      if(req.query.start_date && req.query.end_date) qWhere.check_in = { [Op.between]: [req.query.start_date, req.query.end_date] }
+      if (req.query.user_id) qWhere.user_id = req.query.user_id
+      if (req.query.start_date && req.query.end_date) qWhere.check_in = { [Op.between]: [req.query.start_date, req.query.end_date] }
 
       let qOrder = []
-      if(req.query.order != undefined){
+      if (req.query.order != undefined) {
         let order = req.query.order.split(',')
-        if(order.length > 0){
+        if (order.length > 0) {
           order.forEach((o) => {
             let obj = o.split(':')
-            if(obj.length > 0) {
-              if(obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
+            if (obj.length > 0) {
+              if (obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
             }
           })
         }
@@ -35,7 +35,7 @@ class PresenceController {
         where: qWhere,
         order: qOrder,
         include: [
-          { model: user, as: 'user', attributes: [ 'id', 'user_code', 'username', 'name' ] },
+          { model: user, as: 'user', attributes: ['id', 'user_code', 'username', 'name'] },
         ]
       })
 
@@ -53,7 +53,7 @@ class PresenceController {
           "next_page": +next_page,
           "prev_page": +prev_page,
           "limit": +limit,
-          
+
           "result": qRes,
         }
       })
@@ -62,7 +62,7 @@ class PresenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async checkIn(req, res) {
@@ -71,10 +71,10 @@ class PresenceController {
       check_in: "required",
       position_check_in: "required",
       type: "required"
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -87,7 +87,7 @@ class PresenceController {
     const t = await sequelize.transaction();
     try {
       const rulesType = ['wfh', 'wfo']
-      if(!rulesType.includes(type)){
+      if (!rulesType.includes(type)) {
         return res.json({
           "status": false,
           "message": "user:type (must be: wfh, wfo)"
@@ -97,7 +97,7 @@ class PresenceController {
       //check in harus tgl sekarang tidak boleh lebih atau kurang
       const now = moment().format('YYYY-MM-DD');
       const checkIn = moment(check_in, 'YYYY-MM-DD')
-      if(!checkIn.isSame(now)) {
+      if (!checkIn.isSame(now)) {
         return res.status(200).json({
           "status": false,
           "message": `tanggal check in harus hari ini (${now})`,
@@ -114,7 +114,7 @@ class PresenceController {
         },
       });
 
-      if(countCheckIn > 0){
+      if (countCheckIn > 0) {
         return res.status(200).json({
           "status": false,
           "message": `sudah melakukan presensi masuk (${checkIn.format('YYYY-MM-DD')})`,
@@ -123,15 +123,15 @@ class PresenceController {
 
       //check user
       let userExist = await user.findByPk(user_id)
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
 
 
       //check dapat wfh
-      if(type == "wfh"){
-        if(!userExist.can_wfh) {
+      if (type == "wfh") {
+        if (!userExist.can_wfh) {
           return res.json({
             "status": false,
             "message": "user: tidak bisa wfh"
@@ -143,7 +143,7 @@ class PresenceController {
       let late = false;
       let lateAmount = 0;
       let officeConfigExist = await office_config.findAll();
-      if(officeConfigExist[0] != undefined){
+      if (officeConfigExist[0] != undefined) {
         officeConfigExist = officeConfigExist[0]
         let workSchedule = officeConfigExist.work_schedule;
         workSchedule = workSchedule.split(" ");
@@ -156,9 +156,9 @@ class PresenceController {
         console.log("check in hour: ", checkInHour)
         console.log("start work schedule: ", startWorkSchedule)
 
-        if(checkInHour.isAfter(startWorkSchedule)){
+        if (checkInHour.isAfter(startWorkSchedule)) {
           late = true;
-          lateAmount = moment.duration(checkInHour.diff(startWorkSchedule)).asMinutes()
+          lateAmount = Math.round(moment.duration(checkInHour.diff(startWorkSchedule)).asMinutes())
           console.log(late, lateAmount)
         }
       } else {
@@ -167,7 +167,7 @@ class PresenceController {
           "message": "office_config: not found",
         })
       }
-      
+
       await presence.create({
         check_in: check_in,
         position_check_in: JSON.stringify(position_check_in),
@@ -191,7 +191,7 @@ class PresenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async checkOut(req, res) {
@@ -200,10 +200,10 @@ class PresenceController {
       check_out: "required",
       position_check_out: "required",
       description: "required",
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -216,7 +216,7 @@ class PresenceController {
     const t = await sequelize.transaction();
     try {
       const checkOut = moment(check_out, 'YYYY-MM-DD')
-      
+
       //check apakah sudah sudah check in?
       const countCheckIn = await presence.count({
         where: {
@@ -227,7 +227,7 @@ class PresenceController {
         },
       });
 
-      if(countCheckIn == 0){
+      if (countCheckIn == 0) {
         return res.status(200).json({
           "status": false,
           "message": `belum melakukan presensi masuk (${checkOut.format('YYYY-MM-DD')})`,
@@ -244,7 +244,7 @@ class PresenceController {
         },
       });
 
-      if(countCheckOut > 0){
+      if (countCheckOut > 0) {
         return res.status(200).json({
           "status": false,
           "message": `sudah melakukan presensi keluar (${checkOut.format('YYYY-MM-DD')})`,
@@ -253,7 +253,7 @@ class PresenceController {
 
       //check user
       let userExist = await user.findByPk(user_id)
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
@@ -268,18 +268,18 @@ class PresenceController {
         },
       });
 
-      if(!gCheckIn || gCheckIn[0] == undefined){
+      if (!gCheckIn || gCheckIn[0] == undefined) {
         return res.status(200).json({
           "status": false,
           "message": `tidak ditemukan (${checkOut.format('YYYY-MM-DD')})`,
         })
       }
-          
+
       //check fulltime
       let fulltime = false;
       let remainingHour = 0;
       let officeConfigExist = await office_config.findAll();
-      if(officeConfigExist[0] != undefined){
+      if (officeConfigExist[0] != undefined) {
         officeConfigExist = officeConfigExist[0]
         gCheckIn = gCheckIn[0]
         let workSchedule = officeConfigExist.work_schedule;
@@ -291,7 +291,7 @@ class PresenceController {
         endWorkSchedule = moment(endWorkSchedule, 'HH:mm')
         console.log("configStart", startWorkSchedule)
         console.log("configEnd", endWorkSchedule)
-        
+
         let dCheckIn = moment(gCheckIn.check_in, 'YYYY-MM-DD HH:mm:ss')
         let dCheckOut = moment(check_out, 'YYYY-MM-DD HH:mm:ss')
         console.log("actualStart", dCheckIn)
@@ -301,21 +301,22 @@ class PresenceController {
         const diffActual = moment.duration(dCheckOut.diff(dCheckIn)).asMinutes()
         console.log("diffConfig", diffConfig)
         console.log("diffActual", diffActual)
-        
-        if(diffActual <= diffConfig){
+
+        if (diffActual <= diffConfig) {
           remainingHour = diffConfig - diffActual;
-        }else{
+          remainingHour = Math.round(remainingHour)
+        } else {
           remainingHour = 0;
         }
 
-        if(diffActual >= diffConfig) fulltime =  true;
+        if (diffActual >= diffConfig) fulltime = true;
       } else {
         return res.json({
           "status": false,
           "message": "office_config: not found",
         })
       }
-      
+
       await presence.update({
         check_out: check_out,
         position_check_out: JSON.stringify(position_check_out),
@@ -342,17 +343,17 @@ class PresenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async startOvertime(req, res) {
     let rules = {
       user_id: "required",
       overtime_start_at: "required"
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -375,7 +376,7 @@ class PresenceController {
         },
       });
 
-      if(countOvertime == 0){
+      if (countOvertime == 0) {
         return res.status(200).json({
           "status": false,
           "message": `belum mengajukan lembur (${overtimeStartAt.format('YYYY-MM-DD')})`,
@@ -392,7 +393,7 @@ class PresenceController {
         },
       });
 
-      if(countCheckOut == 0){
+      if (countCheckOut == 0) {
         return res.status(200).json({
           "status": false,
           "message": `belum melakukan presensi keluar (${overtimeStartAt.format('YYYY-MM-DD')})`,
@@ -409,7 +410,7 @@ class PresenceController {
         },
       });
 
-      if(countStartOvertime > 0){
+      if (countStartOvertime > 0) {
         return res.status(200).json({
           "status": false,
           "message": `sudah memulai lembur (${overtimeStartAt.format('YYYY-MM-DD')})`,
@@ -439,17 +440,17 @@ class PresenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async endOvertime(req, res) {
     let rules = {
       user_id: "required",
       overtime_end_at: "required"
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -473,7 +474,7 @@ class PresenceController {
         },
       });
 
-      if(countCheckOut == 0){
+      if (countCheckOut == 0) {
         return res.status(200).json({
           "status": false,
           "message": `belum memulai lembur (${overtimeEndAt.format('YYYY-MM-DD')})`,
@@ -490,7 +491,7 @@ class PresenceController {
         },
       });
 
-      if(countEndOvertime > 0){
+      if (countEndOvertime > 0) {
         return res.status(200).json({
           "status": false,
           "message": `sudah mengakhiri lembur (${overtimeEndAt.format('YYYY-MM-DD')})`,
@@ -519,17 +520,17 @@ class PresenceController {
         "status": false,
         "message": error.message,
       })
-    }     
+    }
   }
 
   async startHolidayOvertime(req, res) {
     let rules = {
       user_id: "required",
       overtime_start_at: "required"
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -552,7 +553,7 @@ class PresenceController {
         },
       });
 
-      if(countOvertime == 0){
+      if (countOvertime == 0) {
         return res.status(200).json({
           "status": false,
           "message": `belum mengajukan lembur (${overtimeStartAt.format('YYYY-MM-DD')})`,
@@ -569,7 +570,7 @@ class PresenceController {
         },
       });
 
-      if(countStartOvertime > 0){
+      if (countStartOvertime > 0) {
         return res.status(200).json({
           "status": false,
           "message": `sudah memulai lembur (${overtimeStartAt.format('YYYY-MM-DD')})`,
@@ -594,17 +595,17 @@ class PresenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async endHolidayOvertime(req, res) {
     let rules = {
       user_id: "required",
       overtime_end_at: "required"
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -628,7 +629,7 @@ class PresenceController {
         },
       });
 
-      if(countCheckOut == 0){
+      if (countCheckOut == 0) {
         return res.status(200).json({
           "status": false,
           "message": `belum memulai lembur (${overtimeEndAt.format('YYYY-MM-DD')})`,
@@ -645,7 +646,7 @@ class PresenceController {
         },
       });
 
-      if(countEndOvertime > 0){
+      if (countEndOvertime > 0) {
         return res.status(200).json({
           "status": false,
           "message": `sudah mengakhiri lembur (${overtimeEndAt.format('YYYY-MM-DD')})`,
@@ -674,7 +675,7 @@ class PresenceController {
         "status": false,
         "message": error.message,
       })
-    }     
+    }
   }
 }
 
