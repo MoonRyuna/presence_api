@@ -108,12 +108,19 @@ class OvertimeController {
 
   async list_submission_admin(req, res) {
     try {
+      let qWhere = '';
+      if (req.query?.start_date && req.query?.end_date) {
+        qWhere = `AND (submission_at BETWEEN '${req.query?.start_date}' AND '${req.query?.end_date}')`;
+      }
+
+      console.log("WOW", qWhere)
       // Query untuk menghitung total data
       const countQuery = `
         SELECT COUNT(s.id) as total
         FROM submission s
         LEFT JOIN overtime p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'overtime'
         WHERE s.submission_ref_table = 'overtime'
+        ${qWhere}
       `;
 
       // Eksekusi query untuk menghitung total data
@@ -132,6 +139,7 @@ class OvertimeController {
         FROM submission s
         LEFT JOIN overtime p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'overtime'
         WHERE s.submission_ref_table = 'overtime'
+        ${qWhere}
         ORDER BY s.submission_at DESC
         LIMIT :limit
         OFFSET :offset

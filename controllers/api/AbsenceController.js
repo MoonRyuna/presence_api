@@ -110,13 +110,20 @@ class AbsenceController {
 
   async list_submission_admin(req, res) {
     try {
+      let qWhere = '';
+      if (req.query?.start_date && req.query?.end_date) {
+        qWhere = `AND (submission_at BETWEEN '${req.query?.start_date}' AND '${req.query?.end_date}')`;
+      }
+
+      console.log("WOW", qWhere)
       // Query untuk menghitung total data
-      const countQuery = `
+      let countQuery = `
         SELECT COUNT(s.id) as total
         FROM submission s
         LEFT JOIN absence p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'absence'
         LEFT JOIN absence_type abt ON abt.id = p.absence_type_id
         WHERE s.submission_ref_table = 'absence'
+        ${qWhere}
       `;
 
       // Eksekusi query untuk menghitung total data
@@ -130,12 +137,13 @@ class AbsenceController {
       let offset = (current_page - 1) * limit;
 
       // Query utama untuk mengambil data dengan limit dan offset
-      const dataQuery = `
-        SELECT s.*, p.desc, p.cut_annual_leave, abt.name as absence_type
+      let dataQuery = `
+        SELECT s.*, p.desc, p.cut_annual_leave, abt.name as absence_type, p.absence_at
         FROM submission s
         LEFT JOIN absence p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'absence'
         LEFT JOIN absence_type abt ON abt.id = p.absence_type_id
         WHERE s.submission_ref_table = 'absence'
+        ${qWhere}
         ORDER BY s.submission_at DESC
         LIMIT :limit
         OFFSET :offset

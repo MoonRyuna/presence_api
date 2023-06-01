@@ -248,6 +248,10 @@ class UserController {
       can_wfh: "required"
     }
 
+    if (req.body?.password) {
+      rules.password = 'alpha_dash|min:6'
+    }
+
     let validation = new Validator(req.body, rules)
     if (validation.fails()) {
       return res.status(422).json({
@@ -358,6 +362,10 @@ class UserController {
         device_tracker: device_tracker,
         updated_by: updated_by,
         can_wfh: can_wfh
+      }
+
+      if (req.body?.password) {
+        updateData.password = await bcrypt.hash(req.body?.password, saltRounds);
       }
 
       if (profile_picture != "") {
