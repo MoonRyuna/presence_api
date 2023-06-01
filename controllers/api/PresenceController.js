@@ -65,6 +65,34 @@ class PresenceController {
     }
   }
 
+  async findById(req, res) {
+    try {
+      const qRes = await presence.findByPk(req.params.id, {
+        include: [
+          { model: user, as: 'user', attributes: ['id', 'user_code', 'username', 'name'] },
+        ]
+      });
+
+      if (!qRes) {
+        return res.status(404).json({
+          "status": false,
+          "message": "presence:not found",
+        });
+      }
+
+      return res.json({
+        "status": true,
+        "message": "presence:success",
+        "data": qRes,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
+      });
+    }
+  }
+
   async checkIn(req, res) {
     let rules = {
       user_id: "required",

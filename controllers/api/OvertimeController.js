@@ -13,17 +13,17 @@ class OvertimeController {
       let offset = (page - 1) * limit
 
       let qWhere = {}
-      if(req.query.user_id) qWhere.user_id = req.query.user_id
-      if(req.query.start_date && req.query.end_date) qWhere.overtime_at = { [Op.between]: [req.query.start_date, req.query.end_date] }
+      if (req.query.user_id) qWhere.user_id = req.query.user_id
+      if (req.query.start_date && req.query.end_date) qWhere.overtime_at = { [Op.between]: [req.query.start_date, req.query.end_date] }
 
       let qOrder = []
-      if(req.query.order != undefined){
+      if (req.query.order != undefined) {
         let order = req.query.order.split(',')
-        if(order.length > 0){
+        if (order.length > 0) {
           order.forEach((o) => {
             let obj = o.split(':')
-            if(obj.length > 0) {
-              if(obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
+            if (obj.length > 0) {
+              if (obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
             }
           })
         }
@@ -35,7 +35,7 @@ class OvertimeController {
         where: qWhere,
         order: qOrder,
         include: [
-          { model: user, as: 'user', attributes: [ 'id', 'user_code', 'username', 'name' ] },
+          { model: user, as: 'user', attributes: ['id', 'user_code', 'username', 'name'] },
         ]
       })
 
@@ -61,7 +61,7 @@ class OvertimeController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async list_submission(req, res) {
@@ -69,7 +69,7 @@ class OvertimeController {
       let overtime_id = req.params.id;
       const qOvertime = await overtime.findByPk(overtime_id)
 
-      if(!qOvertime){
+      if (!qOvertime) {
         return res.json({
           "status": false,
           "message": "overtime:not found",
@@ -82,11 +82,11 @@ class OvertimeController {
           submission_ref_id: overtime_id
         },
         include: [
-          { model: user, as: 'authorizer', attributes: [ 'id', 'user_code', 'username', 'name' ] },
+          { model: user, as: 'authorizer', attributes: ['id', 'user_code', 'username', 'name'] },
         ]
       })
 
-      if(!qSubmission) {
+      if (!qSubmission) {
         return res.json({
           "status": false,
           "message": "submission:empty",
@@ -103,24 +103,89 @@ class OvertimeController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
+  }
+
+  async list_submission_admin(req, res) {
+    try {
+      // Query untuk menghitung total data
+      const countQuery = `
+        SELECT COUNT(s.id) as total
+        FROM submission s
+        LEFT JOIN overtime p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'overtime'
+        WHERE s.submission_ref_table = 'overtime'
+      `;
+
+      // Eksekusi query untuk menghitung total data
+      const countResult = await sequelize.queryInterface.sequelize.query(countQuery, {
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      const total = +countResult[0].total;
+      let current_page = +req.query.page || 1;
+      let limit = +req.query.limit || 10;
+      let offset = (current_page - 1) * limit;
+
+      // Query utama untuk mengambil data dengan limit dan offset
+      const dataQuery = `
+        SELECT s.*, p.desc
+        FROM submission s
+        LEFT JOIN overtime p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'overtime'
+        WHERE s.submission_ref_table = 'overtime'
+        ORDER BY s.submission_at DESC
+        LIMIT :limit
+        OFFSET :offset
+      `;
+
+      // Eksekusi query untuk mengambil data dengan limit dan offset
+      const qRes = await sequelize.queryInterface.sequelize.query(dataQuery, {
+        replacements: {
+          limit,
+          offset,
+        },
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      let prev_page = (current_page > 1) ? (current_page - 1) : null;
+      let next_page = total > (current_page * limit) ? (current_page + 1) : null;
+      console.log("total", total)
+      console.log("current", (current_page * limit))
+
+      return res.json({
+        "status": true,
+        "message": "overtime:success",
+        "data": {
+          "total": total,
+          "current_page": current_page,
+          "next_page": next_page,
+          "prev_page": prev_page,
+          "limit": limit,
+          "result": qRes,
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
+      });
+    }
   }
 
   async findById(req, res) {
     try {
       const qRes = await overtime.findByPk(req.params.id, {
         include: [
-          { model: user, as: 'user', attributes: [ 'id', 'user_code', 'username', 'name' ] },
+          { model: user, as: 'user', attributes: ['id', 'user_code', 'username', 'name'] },
         ]
       });
-  
+
       if (!qRes) {
         return res.status(404).json({
           "status": false,
           "message": "overtime:not found",
         });
       }
-  
+
       return res.json({
         "status": true,
         "message": "overtime:success",
@@ -139,10 +204,10 @@ class OvertimeController {
       user_id: "required",
       overtime_at: "required",
       desc: "required",
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -153,7 +218,7 @@ class OvertimeController {
     let { user_id, overtime_at, desc } = req.body
 
     let attachment = ''
-    if(req.body?.attachment){
+    if (req.body?.attachment) {
       attachment = req.body?.attachment
     }
 
@@ -162,7 +227,7 @@ class OvertimeController {
       // check tgl pengajuan >= tgl sekarang
       const now = moment().format('YYYY-MM-DD');
       const overtimeAt = moment(overtime_at, 'YYYY-MM-DD')
-      if(!overtimeAt.isSameOrAfter(now)) {
+      if (!overtimeAt.isSameOrAfter(now)) {
         // console.log(overtimeAt, now)
         return res.status(200).json({
           "status": false,
@@ -180,26 +245,26 @@ class OvertimeController {
         },
       });
 
-      if(countOvertime > 0){
+      if (countOvertime > 0) {
         return res.status(200).json({
           "status": false,
           "message": `sudah ada pengajuan pada tanggal ${overtimeAt.format('YYYY-MM-DD')} *(pending/approved)`,
         })
       }
-    
+
       let userExist = await user.findByPk(user_id)
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
-      
+
       let qOvertime = await overtime.create({
         user_id: user_id,
         overtime_at: overtime_at,
         overtime_status: 0, //0 = pending, 1 = approved, 2 = rejected, 3 = canceled, 4 = expired
         desc: desc,
         attachment: attachment,
-      })  
+      })
 
       await submission.create({
         submission_type: "new", //new, cancel
@@ -220,29 +285,29 @@ class OvertimeController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async cancel(req, res) {
     let rules = {
       overtime_id: "required",
-    }     
-    
+    }
+
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
         "data": validation.errors.all()
       })
     }
-    
+
     let { overtime_id } = req.body
 
     const t = await sequelize.transaction();
     try {
       let qOvertime = await overtime.findByPk(overtime_id)
-      if(!qOvertime) return res.json({
+      if (!qOvertime) return res.json({
         "status": false,
         "message": "overtime:not found"
       })
@@ -256,7 +321,7 @@ class OvertimeController {
         }
       })
 
-      if(countSubmission){
+      if (countSubmission) {
         return res.status(200).json({
           "status": false,
           "message": 'silakan selesaikan pengajuan sebelumnya',
@@ -265,7 +330,7 @@ class OvertimeController {
 
       // check pengajuan status 1
       // console.log(qOvertime)
-      if(qOvertime.overtime_status != '1'){
+      if (qOvertime.overtime_status != '1') {
         return res.status(200).json({
           "status": false,
           "message": 'pengajuan yang di cancel harus berstatus 1 *(approved)',
@@ -275,7 +340,7 @@ class OvertimeController {
       // check tgl pengajuan > tgl sekarang
       const now = moment().format('YYYY-MM-DD')
       const overtimeAt = moment(qOvertime.overtime_at)
-      if(overtimeAt.startOf('day').isBefore(now)) {
+      if (overtimeAt.startOf('day').isBefore(now)) {
         return res.status(200).json({
           "status": false,
           "message": 'cancel tidak dapat dilakukan karena telah melebihi hari ini',
@@ -289,7 +354,7 @@ class OvertimeController {
         submission_ref_table: "overtime",
         submission_ref_id: qOvertime.id,
       })
-      
+
       await t.commit();
       return res.json({
         "status": true,
@@ -302,17 +367,17 @@ class OvertimeController {
         "status": false,
         "message": error.message,
       })
-    }    
+    }
   }
 
   async approve(req, res) {
     let rules = {
       submission_id: "required",
       authorization_by: "required",
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -325,29 +390,29 @@ class OvertimeController {
     const t = await sequelize.transaction();
     try {
       let qSubmission = await submission.findByPk(submission_id)
-      if(!qSubmission) return res.json({
+      if (!qSubmission) return res.json({
         "status": false,
         "message": "submission:not found"
       })
 
-      if(qSubmission.submission_status != 0) return res.json({
+      if (qSubmission.submission_status != 0) return res.json({
         "status": false,
         "message": "submission:already " + (qSubmission.submission_status == 1 ? "approved" : "rejected")
       })
 
       let qOvertime = await overtime.findByPk(qSubmission.submission_ref_id)
-      if(!qOvertime) return res.json({
+      if (!qOvertime) return res.json({
         "status": false,
         "message": "overtime:not found"
       })
 
       let qUser = await user.findByPk(authorization_by)
-      if(!qUser) return res.json({
+      if (!qUser) return res.json({
         "status": false,
         "message": "user:not found"
       })
 
-      if(qSubmission.submission_type == 'new'){
+      if (qSubmission.submission_type == 'new') {
         // check tgl pengajuan > tgl sekarang
 
         await submission.update({
@@ -368,7 +433,7 @@ class OvertimeController {
           }
         })
 
-      }else if(qSubmission.submission_type == 'cancel'){
+      } else if (qSubmission.submission_type == 'cancel') {
         await submission.update({
           submission_status: "1",
           authorization_by: qUser.id,
@@ -387,7 +452,7 @@ class OvertimeController {
           }
         })
 
-        if(qOvertime.cut_annual_leave){
+        if (qOvertime.cut_annual_leave) {
           const qUserAnnualLeave = await user_annual_leave.findAll({
             where: {
               user_id: qOvertime.user_id,
@@ -395,7 +460,7 @@ class OvertimeController {
             }
           })
 
-          if(qUserAnnualLeave){
+          if (qUserAnnualLeave) {
             let qUA = qUserAnnualLeave[0]
 
             let nAnnualLeave = qUA.annual_leave + 1;
@@ -421,17 +486,17 @@ class OvertimeController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async reject(req, res) {
     let rules = {
       submission_id: "required",
       authorization_by: "required",
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -444,29 +509,29 @@ class OvertimeController {
     const t = await sequelize.transaction();
     try {
       let qSubmission = await submission.findByPk(submission_id)
-      if(!qSubmission) return res.json({
+      if (!qSubmission) return res.json({
         "status": false,
         "message": "submission:not found"
       })
 
-      if(qSubmission.submission_status != 0) return res.json({
+      if (qSubmission.submission_status != 0) return res.json({
         "status": false,
         "message": "submission:already " + (qSubmission.submission_status == 1 ? "approved" : "rejected")
       })
 
       let qOvertime = await overtime.findByPk(qSubmission.submission_ref_id)
-      if(!qOvertime) return res.json({
+      if (!qOvertime) return res.json({
         "status": false,
         "message": "overtime:not found"
       })
 
       let qUser = await user.findByPk(authorization_by)
-      if(!qUser) return res.json({
+      if (!qUser) return res.json({
         "status": false,
         "message": "user:not found"
       })
 
-      if(qSubmission.submission_type == 'new'){
+      if (qSubmission.submission_type == 'new') {
         await submission.update({
           submission_status: "2",
           authorization_by: qUser.id,
@@ -484,7 +549,7 @@ class OvertimeController {
             id: qOvertime.id
           }
         })
-      }else if(qSubmission.submission_type == 'cancel'){
+      } else if (qSubmission.submission_type == 'cancel') {
         await submission.update({
           submission_status: "2",
           authorization_by: qUser.id,
@@ -507,7 +572,7 @@ class OvertimeController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 }
 

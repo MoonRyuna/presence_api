@@ -3,6 +3,7 @@ const Sequelize = require('sequelize')
 const Op = Sequelize.Op
 const Validator = require('validatorjs')
 const moment = require("moment")
+const { QueryTypes } = require('sequelize');
 
 class AbsenceController {
   async list(req, res) {
@@ -13,17 +14,17 @@ class AbsenceController {
       let offset = (page - 1) * limit
 
       let qWhere = {}
-      if(req.query.user_id) qWhere.user_id = req.query.user_id
-      if(req.query.start_date && req.query.end_date) qWhere.absence_at = { [Op.between]: [req.query.start_date, req.query.end_date] }
+      if (req.query.user_id) qWhere.user_id = req.query.user_id
+      if (req.query.start_date && req.query.end_date) qWhere.absence_at = { [Op.between]: [req.query.start_date, req.query.end_date] }
 
       let qOrder = []
-      if(req.query.order != undefined){
+      if (req.query.order != undefined) {
         let order = req.query.order.split(',')
-        if(order.length > 0){
+        if (order.length > 0) {
           order.forEach((o) => {
             let obj = o.split(':')
-            if(obj.length > 0) {
-              if(obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
+            if (obj.length > 0) {
+              if (obj[1] == 'asc' || obj[1] == 'desc') qOrder.push([obj[0], obj[1]])
             }
           })
         }
@@ -35,8 +36,8 @@ class AbsenceController {
         where: qWhere,
         order: qOrder,
         include: [
-          { model: user, as: 'user', attributes: [ 'id', 'user_code', 'username', 'name' ] },
-          { model: absence_type, as: 'absence_type', attributes: [ 'id', 'name', 'cut_annual_leave' ] },
+          { model: user, as: 'user', attributes: ['id', 'user_code', 'username', 'name'] },
+          { model: absence_type, as: 'absence_type', attributes: ['id', 'name', 'cut_annual_leave'] },
         ]
       })
 
@@ -62,7 +63,7 @@ class AbsenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async list_submission(req, res) {
@@ -70,7 +71,7 @@ class AbsenceController {
       let absence_id = req.params.id;
       const qAbsence = await absence.findByPk(absence_id)
 
-      if(!qAbsence){
+      if (!qAbsence) {
         return res.json({
           "status": false,
           "message": "absence:not found",
@@ -81,13 +82,13 @@ class AbsenceController {
         where: {
           submission_ref_table: 'absence',
           submission_ref_id: absence_id
-        }, 
+        },
         include: [
-          { model: user, as: 'authorizer', attributes: [ 'id', 'user_code', 'username', 'name' ] },
+          { model: user, as: 'authorizer', attributes: ['id', 'user_code', 'username', 'name'] },
         ]
       })
 
-      if(!qSubmission) {
+      if (!qSubmission) {
         return res.json({
           "status": false,
           "message": "submission:empty",
@@ -104,25 +105,92 @@ class AbsenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
+  }
+
+  async list_submission_admin(req, res) {
+    try {
+      // Query untuk menghitung total data
+      const countQuery = `
+        SELECT COUNT(s.id) as total
+        FROM submission s
+        LEFT JOIN absence p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'absence'
+        LEFT JOIN absence_type abt ON abt.id = p.absence_type_id
+        WHERE s.submission_ref_table = 'absence'
+      `;
+
+      // Eksekusi query untuk menghitung total data
+      const countResult = await sequelize.queryInterface.sequelize.query(countQuery, {
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      const total = +countResult[0].total;
+      let current_page = +req.query.page || 1;
+      let limit = +req.query.limit || 10;
+      let offset = (current_page - 1) * limit;
+
+      // Query utama untuk mengambil data dengan limit dan offset
+      const dataQuery = `
+        SELECT s.*, p.desc, p.cut_annual_leave, abt.name as absence_type
+        FROM submission s
+        LEFT JOIN absence p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'absence'
+        LEFT JOIN absence_type abt ON abt.id = p.absence_type_id
+        WHERE s.submission_ref_table = 'absence'
+        ORDER BY s.submission_at DESC
+        LIMIT :limit
+        OFFSET :offset
+      `;
+
+      // Eksekusi query untuk mengambil data dengan limit dan offset
+      const qRes = await sequelize.queryInterface.sequelize.query(dataQuery, {
+        replacements: {
+          limit,
+          offset,
+        },
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      let prev_page = (current_page > 1) ? (current_page - 1) : null;
+      let next_page = total > (current_page * limit) ? (current_page + 1) : null;
+      console.log("total", total)
+      console.log("current", (current_page * limit))
+
+      return res.json({
+        "status": true,
+        "message": "absence:success",
+        "data": {
+          "total": total,
+          "current_page": current_page,
+          "next_page": next_page,
+          "prev_page": prev_page,
+          "limit": limit,
+          "result": qRes,
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
+      });
+    }
   }
 
   async findById(req, res) {
     try {
       const qRes = await absence.findByPk(req.params.id, {
         include: [
-          { model: user, as: 'user', attributes: [ 'id', 'user_code', 'username', 'name' ] },
-          { model: absence_type, as: 'absence_type', attributes: [ 'id', 'name', 'cut_annual_leave' ] },
+          { model: user, as: 'user', attributes: ['id', 'user_code', 'username', 'name'] },
+          { model: absence_type, as: 'absence_type', attributes: ['id', 'name', 'cut_annual_leave'] },
         ]
       });
-  
+
       if (!qRes) {
         return res.status(404).json({
           "status": false,
           "message": "overtime:not found",
         });
       }
-  
+
       return res.json({
         "status": true,
         "message": "overtime:success",
@@ -142,10 +210,10 @@ class AbsenceController {
       absence_at: "required",
       absence_type_id: "required",
       desc: "required",
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -156,7 +224,7 @@ class AbsenceController {
     let { user_id, absence_at, absence_type_id, desc } = req.body
 
     let attachment = ''
-    if(req.body?.attachment){
+    if (req.body?.attachment) {
       attachment = req.body?.attachment
     }
 
@@ -165,7 +233,7 @@ class AbsenceController {
       // check tgl pengajuan >= tgl sekarang
       const now = moment().format('YYYY-MM-DD');
       const absenceAt = moment(absence_at, 'YYYY-MM-DD')
-      if(!absenceAt.isSameOrAfter(now)) {
+      if (!absenceAt.isSameOrAfter(now)) {
         // console.log(absenceAt, now)
         return res.status(200).json({
           "status": false,
@@ -183,28 +251,28 @@ class AbsenceController {
         },
       });
 
-      if(countAbsence > 0){
+      if (countAbsence > 0) {
         return res.status(200).json({
           "status": false,
           "message": `sudah ada pengajuan pada tanggal ${absenceAt.format('YYYY-MM-DD')} *(pending/approved)`,
         })
       }
-    
+
       let userExist = await user.findByPk(user_id)
-      if(!userExist) return res.json({
+      if (!userExist) return res.json({
         "status": false,
         "message": "user:not found"
       })
 
       let absenceTypeExist = await absence_type.findByPk(absence_type_id)
-      if(!absenceTypeExist) return res.json({
+      if (!absenceTypeExist) return res.json({
         "status": false,
         "message": "absence_type:not found"
       })
 
       // check jatah cuti tahunan
       const cut_annual_leave = absenceTypeExist?.cut_annual_leave;
-      if(cut_annual_leave){
+      if (cut_annual_leave) {
         const qUserAnnualLeave = await user_annual_leave.findAll({
           where: {
             user_id: user_id,
@@ -212,12 +280,12 @@ class AbsenceController {
           }
         })
 
-        if(qUserAnnualLeave){
+        if (qUserAnnualLeave) {
           let qUA = qUserAnnualLeave[0]
-          if(qUA.annual_leave == 0){
+          if (qUA.annual_leave == 0) {
             return res.json({
               "status": false,
-              "message": "jatah cuti tahun "+moment().format('YYYY')+" habis",
+              "message": "jatah cuti tahun " + moment().format('YYYY') + " habis",
             })
           }
         }
@@ -231,7 +299,7 @@ class AbsenceController {
         cut_annual_leave: cut_annual_leave,
         desc: desc,
         attachment: attachment,
-      })  
+      })
 
       await submission.create({
         submission_type: "new", //new, cancel
@@ -252,29 +320,29 @@ class AbsenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async cancel(req, res) {
     let rules = {
       absence_id: "required",
-    }     
-    
+    }
+
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
         "data": validation.errors.all()
       })
     }
-    
+
     let { absence_id } = req.body
 
     const t = await sequelize.transaction();
     try {
       let qAbsence = await absence.findByPk(absence_id)
-      if(!qAbsence) return res.json({
+      if (!qAbsence) return res.json({
         "status": false,
         "message": "absence:not found"
       })
@@ -288,7 +356,7 @@ class AbsenceController {
         }
       })
 
-      if(countSubmission){
+      if (countSubmission) {
         return res.status(200).json({
           "status": false,
           "message": 'silakan selesaikan pengajuan sebelumnya',
@@ -297,7 +365,7 @@ class AbsenceController {
 
       // check pengajuan status 1
       // console.log(qAbsence)
-      if(qAbsence.absence_status != '1'){
+      if (qAbsence.absence_status != '1') {
         return res.status(200).json({
           "status": false,
           "message": 'pengajuan yang di cancel harus berstatus 1 *(approved)',
@@ -307,7 +375,7 @@ class AbsenceController {
       // check tgl pengajuan > tgl sekarang
       const now = moment().format('YYYY-MM-DD')
       const absenceAt = moment(qAbsence.absence_at)
-      if(absenceAt.startOf('day').isBefore(now)) {
+      if (absenceAt.startOf('day').isBefore(now)) {
         return res.status(200).json({
           "status": false,
           "message": 'cancel tidak dapat dilakukan karena telah melebihi hari ini',
@@ -321,7 +389,7 @@ class AbsenceController {
         submission_ref_table: "absence",
         submission_ref_id: qAbsence.id,
       })
-      
+
       await t.commit();
       return res.json({
         "status": true,
@@ -334,17 +402,17 @@ class AbsenceController {
         "status": false,
         "message": error.message,
       })
-    }    
+    }
   }
 
   async approve(req, res) {
     let rules = {
       submission_id: "required",
       authorization_by: "required",
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -357,31 +425,31 @@ class AbsenceController {
     const t = await sequelize.transaction();
     try {
       let qSubmission = await submission.findByPk(submission_id)
-      if(!qSubmission) return res.json({
+      if (!qSubmission) return res.json({
         "status": false,
         "message": "submission:not found"
       })
 
-      if(qSubmission.submission_status != 0) return res.json({
+      if (qSubmission.submission_status != 0) return res.json({
         "status": false,
         "message": "submission:already " + (qSubmission.submission_status == 1 ? "approved" : "rejected")
       })
 
       let qAbsence = await absence.findByPk(qSubmission.submission_ref_id)
-      if(!qAbsence) return res.json({
+      if (!qAbsence) return res.json({
         "status": false,
         "message": "absence:not found"
       })
 
       let qUser = await user.findByPk(authorization_by)
-      if(!qUser) return res.json({
+      if (!qUser) return res.json({
         "status": false,
         "message": "user:not found"
       })
 
-      if(qSubmission.submission_type == 'new'){
+      if (qSubmission.submission_type == 'new') {
         // check tgl pengajuan > tgl sekarang
-        if(qAbsence.cut_annual_leave){
+        if (qAbsence.cut_annual_leave) {
           const qUserAnnualLeave = await user_annual_leave.findAll({
             where: {
               user_id: qAbsence.user_id,
@@ -389,12 +457,12 @@ class AbsenceController {
             }
           })
 
-          if(qUserAnnualLeave){
+          if (qUserAnnualLeave) {
             let qUA = qUserAnnualLeave[0]
-            if((qUA.annual_leave - 1) == 0){
+            if ((qUA.annual_leave - 1) == 0) {
               return res.json({
                 "status": false,
-                "message": "absence:jatah cuti tahun "+moment().format('YYYY')+" habis",
+                "message": "absence:jatah cuti tahun " + moment().format('YYYY') + " habis",
               })
             }
 
@@ -408,7 +476,7 @@ class AbsenceController {
             })
           }
         }
-        
+
         await submission.update({
           submission_status: "1",
           authorization_by: qUser.id,
@@ -427,7 +495,7 @@ class AbsenceController {
           }
         })
 
-      }else if(qSubmission.submission_type == 'cancel'){
+      } else if (qSubmission.submission_type == 'cancel') {
         await submission.update({
           submission_status: "1",
           authorization_by: qUser.id,
@@ -446,7 +514,7 @@ class AbsenceController {
           }
         })
 
-        if(qAbsence.cut_annual_leave){
+        if (qAbsence.cut_annual_leave) {
           const qUserAnnualLeave = await user_annual_leave.findAll({
             where: {
               user_id: qAbsence.user_id,
@@ -454,7 +522,7 @@ class AbsenceController {
             }
           })
 
-          if(qUserAnnualLeave){
+          if (qUserAnnualLeave) {
             let qUA = qUserAnnualLeave[0]
 
             let nAnnualLeave = qUA.annual_leave + 1;
@@ -480,17 +548,17 @@ class AbsenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 
   async reject(req, res) {
     let rules = {
       submission_id: "required",
       authorization_by: "required",
-    }     
+    }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         "status": false,
         "message": 'form:is not complete',
@@ -503,29 +571,29 @@ class AbsenceController {
     const t = await sequelize.transaction();
     try {
       let qSubmission = await submission.findByPk(submission_id)
-      if(!qSubmission) return res.json({
+      if (!qSubmission) return res.json({
         "status": false,
         "message": "submission:not found"
       })
 
-      if(qSubmission.submission_status != 0) return res.json({
+      if (qSubmission.submission_status != 0) return res.json({
         "status": false,
         "message": "submission:already " + (qSubmission.submission_status == 1 ? "approved" : "rejected")
       })
 
       let qAbsence = await absence.findByPk(qSubmission.submission_ref_id)
-      if(!qAbsence) return res.json({
+      if (!qAbsence) return res.json({
         "status": false,
         "message": "absence:not found"
       })
 
       let qUser = await user.findByPk(authorization_by)
-      if(!qUser) return res.json({
+      if (!qUser) return res.json({
         "status": false,
         "message": "user:not found"
       })
 
-      if(qSubmission.submission_type == 'new'){
+      if (qSubmission.submission_type == 'new') {
         await submission.update({
           submission_status: "2",
           authorization_by: qUser.id,
@@ -543,7 +611,7 @@ class AbsenceController {
             id: qAbsence.id
           }
         })
-      }else if(qSubmission.submission_type == 'cancel'){
+      } else if (qSubmission.submission_type == 'cancel') {
         await submission.update({
           submission_status: "2",
           authorization_by: qUser.id,
@@ -566,7 +634,7 @@ class AbsenceController {
         "status": false,
         "message": error.message,
       })
-    }        
+    }
   }
 }
 

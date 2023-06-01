@@ -6,6 +6,7 @@ const AuthMiddleware = require('../../middlewares/AuthMiddleware')
 
 router.get('/overtime', AuthMiddleware.check, ctl.list)
 router.get('/overtime/submission/:id', AuthMiddleware.check, ctl.list_submission)
+router.get('/overtime/list/submission', AuthMiddleware.check, ctl.list_submission_admin)
 router.get('/overtime/:id', AuthMiddleware.check, ctl.findById)
 router.post('/overtime/submission', AuthMiddleware.check, ctl.submission)
 router.post('/overtime/cancel', AuthMiddleware.check, ctl.cancel)
