@@ -135,9 +135,10 @@ class OvertimeController {
 
       // Query utama untuk mengambil data dengan limit dan offset
       const dataQuery = `
-        SELECT s.*, p.desc, p.overtime_at
+        SELECT s.*, p.desc, p.overtime_at, u.name
         FROM submission s
         LEFT JOIN overtime p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'overtime'
+        LEFT JOIN "user" u ON u.id = p.user_id 
         WHERE s.submission_ref_table = 'overtime'
         ${qWhere}
         ORDER BY s.submission_at DESC

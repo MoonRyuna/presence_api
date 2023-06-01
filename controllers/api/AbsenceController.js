@@ -138,10 +138,11 @@ class AbsenceController {
 
       // Query utama untuk mengambil data dengan limit dan offset
       let dataQuery = `
-        SELECT s.*, p.desc, p.cut_annual_leave, abt.name as absence_type, p.absence_at
+        SELECT s.*, p.desc, p.cut_annual_leave, abt.name as absence_type, p.absence_at, u.name
         FROM submission s
         LEFT JOIN absence p ON p.id = s.submission_ref_id AND s.submission_ref_table = 'absence'
         LEFT JOIN absence_type abt ON abt.id = p.absence_type_id
+        LEFT JOIN "user" u ON u.id = p.user_id 
         WHERE s.submission_ref_table = 'absence'
         ${qWhere}
         ORDER BY s.submission_at DESC
