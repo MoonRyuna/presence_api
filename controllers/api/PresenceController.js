@@ -607,6 +607,7 @@ class PresenceController {
 
       await presence.create({
         user_id: user_id,
+        check_in: overtime_start_at,
         overtime_start_at: overtime_start_at,
         overtime: true
       })
@@ -682,6 +683,7 @@ class PresenceController {
       }
 
       await presence.update({
+        check_out: overtime_end_at,
         overtime_end_at: overtime_end_at,
       }, {
         where: {

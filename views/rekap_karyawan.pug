@@ -1,0 +1,113 @@
+doctype html
+html
+  head
+    title= title
+    link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css')
+    style.
+      @import url('https://fonts.googleapis.com/css2?family=Lexend+Deca&display=swap');
+
+      body {
+        font-family: 'Lexend Deca', sans-serif;
+        color: rgb(100,100, 100);
+      }
+
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        grid-gap: 3rem;
+        padding: 2.5rem;
+      }
+
+      .grid-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: 2rem;
+        //- outline: 0.3rem solid #e1e1e1;
+      }
+
+      .grid-item i {
+        font-size: 7rem;
+        margin-bottom: 0.1rem;
+      }
+
+      .grid-item h5 {
+        font-size: 2rem;
+        margin-bottom: 5px;
+      }
+
+      .grid-item p {
+        font-size: 2rem;
+        margin: 0;
+      }
+
+      .centered-text {
+        margin-top: 1rem;
+        font-size: 2.6rem;
+        text-align: center;
+      }
+  body
+    div.centered-text
+      | #{start_date} - #{end_date}
+
+    .grid-container
+      .grid-item
+        i(class='fas fa-calendar')
+        h5 Hari Kerja
+        p=summary.hari_kerja
+      .grid-item
+        i(class='fas fa-check-circle')
+        h5 Hadir
+        p=summary.hadir
+      .grid-item
+        i(class='fas fa-times-circle')
+        h5 Tidak Hadir
+        p #{summary.cuti + summary.sakit + summary.izin_lainnya + summary.tanpa_keterangan}
+      .grid-item
+        i(class='fas fa-info-circle')
+        h5 Sakit
+        p=summary.sakit
+      .grid-item
+        i(class='fas fa-info-circle')
+        h5 Cuti
+        p=summary.cuti
+      .grid-item
+        i(class='fas fa-info-circle')
+        h5 Izin Lainnya
+        p=summary.izin_lainnya
+      .grid-item
+        i(class='fas fa-question-circle')
+        h5 Tanpa Keterangan
+        p=summary.tanpa_keterangan
+      .grid-item
+        i(class='fas fa-bolt')
+        h5 Lembur
+        p=summary.lembur
+      .grid-item
+        i(class='fas fa-clock')
+        h5 Telat
+        p=summary.telat
+      .grid-item
+        i(class='fas fa-suitcase')
+        h5 Fulltime
+        p=summary.fulltime
+      .grid-item
+        i(class='fas fa-suitcase')
+        h5 Tidak Fulltime
+        p 
+          - if (summary.hadir > 0)
+            | #{summary.hadir - summary.fulltime}
+          - else
+            | #{summary.hadir}
+      .grid-item
+        i(class='fas fa-home')
+        h5 WFH
+        p=summary.wfh
+      .grid-item
+        i(class='fas fa-building')
+        h5 WFO
+        p=summary.wfo

@@ -26,7 +26,8 @@ const swaggerDocument = YAML.load('./docs/collection.yaml')
 const apiVersion = '/api/v1'
 
 //Set view engine
-app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'))
+app.set('view engine', 'pug')
 
 //Setup Log
 const originalSend = app.response.send

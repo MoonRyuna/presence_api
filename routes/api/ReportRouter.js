@@ -8,5 +8,6 @@ router.get('/report', AuthMiddleware.check, ctl.list)
 router.post('/report/create', AuthMiddleware.check, ctl.create)
 router.post('/report/generate/:id', AuthMiddleware.check, ctl.generate)
 router.get('/report/download_excel/:id', AuthMiddleware.check, ctl.downloadExcel)
+router.post('/report/rekap_karyawan', AuthMiddleware.check, ctl.rekapKaryawan)
 
 module.exports = router

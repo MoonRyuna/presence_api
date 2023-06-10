@@ -59,14 +59,25 @@ async function getWorkingDays(startDate, endDate) {
     throw error
   }
 }
-
 function getDateRange(startDate, endDate) {
   const dateRange = [];
   let currentDate = new Date(startDate);
+
+  // Convert endDate to date object if it's a string
+  if (typeof endDate === 'string') {
+    endDate = new Date(endDate);
+  }
+
+  // Check if startDate is greater than endDate
+  if (currentDate > endDate) {
+    return dateRange;
+  }
+
   while (currentDate <= endDate) {
     dateRange.push(new Date(currentDate));
     currentDate.setDate(currentDate.getDate() + 1);
   }
+
   return dateRange;
 }
 
@@ -137,12 +148,6 @@ async function getCalendarHoliday(startDate, endDate) {
 }
 
 async function getHoliday(start = '', end = '') {
-  /*
-    Parameter Example:
-    start = 2020-01-01
-    end = 2021-01-01
-  */
-
   const id_calendar = encodeURIComponent('id.indonesian#holiday@group.v.calendar.google.com');
   const start_date = encodeURIComponent(`${start}T00:00:00-00:00`);
   const end_date = encodeURIComponent(`${end}T00:00:00-00:00`);
@@ -178,23 +183,6 @@ async function getHoliday(start = '', end = '') {
       }
     });
 
-    // const list_holiday = [];
-    // let count_holiday = 0;
-
-    // Object.keys(new_items).forEach(key => {
-    //   const timestamp = new Date(key).getTime();
-    //   const day = new Date(timestamp).getDay();
-
-    //   console.log(key, day)
-    //   // klo sabtu dan minggu ga dimasukin ke array, soalnya udh ada hitungan sabtu minggu
-    //   if (day !== 6 || day !== 0) {
-    //     count_holiday++;
-    //     list_holiday.push(key);
-    //     /* Debug tanggal berapa aja yg libur */
-    //     // console.log(new_items[key][0].start_date);
-    //   }
-    // });
-
     // console.log(new_items)
     return new_items[start] != undefined ? new_items[start] : [];
   } catch (error) {
@@ -203,10 +191,71 @@ async function getHoliday(start = '', end = '') {
   }
 }
 
+async function getHolidays(start = '', end = '', exceptDate, dateOnly) {
+  const id_calendar = encodeURIComponent('id.indonesian#holiday@group.v.calendar.google.com');
+  const start_date = encodeURIComponent(`${start}T00:00:00-00:00`);
+  const end_date = encodeURIComponent(`${end}T00:00:00-00:00`);
+  const key = API_KEY;
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${id_calendar}/events?timeMax=${end_date}&timeMin=${start_date}&key=${key}&timeZone=${TIME_ZONE}`;
+
+  try {
+    const response = await axios.get(url);
+    // console.log(response)
+    const items = response.data.items;
+
+    // re-index array
+
+    if (dateOnly) {
+      const new_items = [];
+      items.forEach(item => {
+
+        const start_date = moment(item.start.date).format('YYYY-MM-DD');
+        const isExceptDate = exceptDate.some(date => moment(date).format('YYYY-MM-DD') === start_date);
+
+        if (!isExceptDate && new_items.indexOf(start_date) === -1) {
+          new_items.push(start_date);
+        }
+      });
+      return new_items;
+    } else {
+      const new_items = {};
+      items.forEach(item => {
+        const start_date = moment(item.start.date).format('YYYY-MM-DD');
+        const isExceptDate = exceptDate.some(date => moment(date).format('YYYY-MM-DD') === start_date);
+
+        if (!isExceptDate) {
+          if (new_items[start_date]) {
+            new_items[start_date].push({
+              'summary': item.summary,
+              'start_date': item.start.date,
+              'end_date': item.end.date
+            });
+          } else {
+            new_items[start_date] = [{
+              'summary': item.summary,
+              'start_date': item.start.date,
+              'end_date': item.end.date
+            }];
+          }
+        }
+      });
+      return new_items;
+
+    }
+
+    return [];
+    // console.log(new_items)
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
 function getWeekendDays(startDate, endDate) {
   const dateRange = getDateRange(startDate, endDate);
+  console.log("wow", dateRange)
   const weekendDays = dateRange.filter((date) => date.getDay() === 0 || date.getDay() === 6);
   return weekendDays;
 }
 
-module.exports = { getWorkingDays, getDateRange, getCalendarHolidays, getHoliday, getCalendarHoliday, getWeekendDays }
+module.exports = { getWorkingDays, getDateRange, getCalendarHolidays, getHoliday, getCalendarHoliday, getWeekendDays, getHolidays }
