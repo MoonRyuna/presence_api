@@ -16,6 +16,9 @@ class ReportController {
       let offset = (page - 1) * limit
 
       let qWhere = {}
+      if (req.query.start_date && req.query.end_date) qWhere.generated_at = { [Op.between]: [req.query.start_date, req.query.end_date] }
+
+      console.log(qWhere);
 
       let qOrder = []
       if (req.query.order != undefined) {
@@ -41,7 +44,7 @@ class ReportController {
       })
 
       let current_page = page
-      let total = await presence.count({ where: qWhere })
+      let total = await report.count({ where: qWhere })
       let prev_page = (+page > 1) ? (+page - 1) : null
       let next_page = total > (+page * limit) ? (+page + 1) : null
 
@@ -58,6 +61,7 @@ class ReportController {
         }
       })
     } catch (error) {
+      console.log(error)
       return res.status(500).json({
         "status": false,
         "message": error.message,
@@ -1145,6 +1149,347 @@ class ReportController {
         summary: summary,
         start_date: moment(start_date).format("DD/MM/YYYY"),
         end_date: moment(end_date).format("DD/MM/YYYY")
+      })
+    } catch (error) {
+      console.log(error)
+      return res.json({
+        "status": false,
+        "message": error.message
+      })
+    }
+  }
+
+  async rekapDetailKaryawan(req, res) {
+    let rules = {
+      month: 'required',
+      year: 'required',
+      user_id: 'required',
+    }
+
+    let validation = new Validator(req.body, rules)
+    if (validation.fails()) {
+      return res.status(422).json({
+        status: false,
+        message: 'form:is not complete',
+        data: validation.errors.all()
+      })
+    }
+
+    let {
+      month,
+      year,
+      user_id
+    } = req.body
+
+    try {
+      if (parseInt(month) < 1 || parseInt(month) > 12) {
+        return res.json({
+          "status": false,
+          "message": "month:hanya boleh 1-12"
+        })
+      }
+
+      let officeConfigExist = await office_config.findAll();
+      if (!officeConfigExist) return res.json({
+        "status": false,
+        "message": "office_config:not found"
+      })
+
+      let userExist = await user.findOne({
+        where: {
+          id: user_id
+        }
+      })
+
+      if (!userExist) return res.json({
+        "status": false,
+        "message": "user:not found"
+      })
+
+      officeConfigExist = officeConfigExist[0]
+
+      let cut_off_date = officeConfigExist.cut_off_date
+
+      month = month.padStart(2, '0')
+
+      let pEnd = `${year}-${month}-${cut_off_date}`
+      let end_date = moment(pEnd, 'YYYY-MM-DD').subtract(1, "days").format('YYYY-MM-DD');
+
+      let pStart = `${year}-${month}`
+      pStart = moment(pStart, 'YYYY-MM').subtract(1, "months").format('YYYY-MM')
+
+      let start_date = moment(`${pStart}-${cut_off_date}`, 'YYYY-MM-DD').format('YYYY-MM-DD');
+
+      console.log('start_date', start_date)
+      console.log('end_date', end_date)
+
+      //get tgl dari range tanggal start - end date
+      let listRangeTanggal = getDateRange(start_date, end_date)
+      let listSabtuMinggu = getWeekendDays(start_date, end_date)
+      let listLiburKalender = await getHolidays(start_date, end_date, listSabtuMinggu, true)
+      console.log('listRangeTanggal', listRangeTanggal)
+      console.log('listSabtuMinggu', listSabtuMinggu)
+      console.log('listLiburKalender', listLiburKalender)
+
+      console.log('Jumlah Sabtu Minggu', listSabtuMinggu.length)
+      console.log('Jumlah Libur Kalender', listLiburKalender.length)
+      const hari_kerja = listRangeTanggal.length - (listSabtuMinggu.length + listLiburKalender.length);
+      console.log('hariKerja', hari_kerja)
+
+      let karyawan = await user.findOne({
+        where: {
+          account_type: "karyawan",
+          deleted: false,
+          id: user_id
+        }
+      })
+
+      let idSakit = [];
+      let idCuti = [];
+      let idLainnya = [];
+
+      const absenceTypeSakit = await absence_type.findAll({
+        where: {
+          name: {
+            [Op.iLike]: '%sakit%'
+          }
+        }
+      });
+
+      if (absenceTypeSakit) {
+        idSakit = absenceTypeSakit.map(data => data.id);
+      }
+
+      const absenceTypeCuti = await absence_type.findAll({
+        where: {
+          cut_annual_leave: true
+        }
+      });
+
+      if (absenceTypeCuti) {
+        idCuti = absenceTypeCuti.map(data => data.id);
+      }
+
+      const absenceTypeLainnya = await absence_type.findAll({
+        where: {
+          name: {
+            [Op.notILike]: '%sakit%'
+          },
+          cut_annual_leave: false
+        }
+      })
+
+      if (absenceTypeLainnya) {
+        idLainnya = absenceTypeLainnya.map(data => data.id);
+      }
+
+      console.log('idSakit', idSakit)
+      console.log('idCuti', idCuti)
+      console.log('idLainnya', idLainnya)
+
+      if (!karyawan) {
+        return res.json({
+          "status": true,
+          "message": "karyawan tidak ditemukan",
+        })
+      }
+      let summary = {
+        hari_kerja: hari_kerja,
+        user_id: karyawan.id,
+        hadir: 0,
+        tanpa_keterangan: 0,
+        cuti: 0,
+        sakit: 0,
+        izin_lainnya: 0,
+        telat: 0,
+        wfh: 0,
+        wfo: 0,
+        lembur: 0,
+        fulltime: 0,
+      }
+
+      let dt = [];
+
+      for (let tgl of listRangeTanggal) {
+        let detail = {
+          user_id: karyawan.id,
+          date: tgl,
+          description: '',
+        }
+        console.log('nama: ', karyawan.name)
+        console.log('tgl: ', tgl)
+        const isSabtuMinggu = listSabtuMinggu.some((tglMinggu) => moment(tglMinggu).isSame(tgl, 'day'))
+        console.log('isSabtuMinggu: ', isSabtuMinggu)
+        const isLiburKalender = listLiburKalender.some((tglLibur) => moment(tglLibur).isSame(tgl, 'day'))
+        console.log('isLiburKalender: ', isLiburKalender)
+
+        if (isSabtuMinggu || isLiburKalender) {
+          tgl = moment(tgl)
+          const rPresence = await presence.findOne({
+            where: {
+              user_id: karyawan.id,
+              [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_start_at'), 'YYYY-MM-DD'), {
+                [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+              })
+            },
+          });
+
+          console.log("rPresence", rPresence)
+          if (rPresence) {
+            console.log('check lembur')
+            const getLembur = await overtime.findOne({
+              where: {
+                overtime_status: '1',
+                user_id: karyawan.id,
+                [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_at'), 'YYYY-MM-DD'), {
+                  [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+                })
+              },
+            });
+            if (getLembur) {
+              let sL = moment(rPresence.overtime_start_at).format('HH:mm:ss')
+              let eL = moment(rPresence.overtime_end_at).format('HH:mm:ss')
+              detail.description = `lembur dihari libur: ${sL} - ${eL} ${getLembur.desc}`
+              summary.lembur = summary.lembur + 1;
+            }
+          } else {
+            if (isSabtuMinggu) {
+              detail.description = `offday: libur sabtu-minggu`
+            } else if (isLiburKalender) {
+              detail.description = `offday: libur tanggal merah`
+            }
+          }
+        } else {
+          let isAbsence = false;
+          tgl = moment(tgl)
+
+          console.log('check cuti')
+          const getCuti = await absence.findOne({
+            where: {
+              absence_status: '1',
+              absence_type_id: { [Op.in]: idCuti },
+              user_id: karyawan.id,
+              [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
+                [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+              })
+            },
+            include: [
+              { model: absence_type, as: 'absence_type', attributes: ['id', 'name', 'cut_annual_leave'] },
+            ]
+          });
+          console.log("cuti", getCuti)
+          if (getCuti) {
+            detail.description = `tidak hadir: [${getCuti.absence_type.name}] ${getCuti.desc}`
+            summary.cuti = summary.cuti + 1;
+          }
+
+          console.log('check sakit')
+          const getSakit = await absence.findOne({
+            where: {
+              absence_status: '1',
+              absence_type_id: { [Op.in]: idSakit },
+              user_id: karyawan.id,
+              [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
+                [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+              })
+            },
+            include: [
+              { model: absence_type, as: 'absence_type', attributes: ['id', 'name', 'cut_annual_leave'] },
+            ]
+          });
+          console.log("sakit", getSakit)
+          if (getSakit) {
+            detail.description = `tidak hadir: [${getSakit.absence_type.name}] ${getSakit.desc}`
+            summary.sakit = summary.sakit + 1;
+          }
+
+          console.log('check izin lainnya')
+          const getLainnya = await absence.findOne({
+            where: {
+              absence_status: '1',
+              absence_type_id: { [Op.in]: idLainnya },
+              user_id: karyawan.id,
+              [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
+                [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+              })
+            },
+            include: [
+              { model: absence_type, as: 'absence_type', attributes: ['id', 'name', 'cut_annual_leave'] },
+            ]
+          });
+          console.log("lainnya", getLainnya)
+          if (getLainnya) {
+            detail.description = `tidak hadir: [${getLainnya.absence_type.name}] ${getLainnya.desc}`
+            summary.izin_lainnya = summary.izin_lainnya + 1;
+          }
+
+          //
+          if (getCuti || getSakit || getLainnya) {
+            isAbsence = true
+          }
+
+          const rPresence = await presence.findOne({
+            where: {
+              user_id: karyawan.id,
+              [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('check_in'), 'YYYY-MM-DD'), {
+                [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+              })
+            },
+          });
+
+          console.log("rPresence", rPresence)
+          if (rPresence) {
+            console.log('check telat')
+            if (rPresence.late) summary.telat = summary.telat + 1;
+
+            console.log('check fulltime')
+            if (rPresence.full_time) summary.fulltime = summary.fulltime + 1;
+
+            console.log('check wfh')
+            if (rPresence.type == 'wfh') summary.wfh = summary.wfh + 1;
+
+            console.log('check wfo')
+            if (rPresence.type == 'wfo') summary.wfo = summary.wfo + 1;
+
+            let sCI = moment(rPresence.check_in).format('HH:mm:ss')
+            console.log("BRO", rPresence.check_out)
+            let eCO = rPresence.check_out != null ? moment(rPresence.check_out).format('HH:mm:ss') : '?'
+            detail.description = `hadir: [${rPresence?.type?.toUpperCase()}] ${sCI} - ${eCO} ${(rPresence.late ? 'telat' : 'tidak telat')} dan ${(rPresence.full_time ? 'fulltime' : 'tidak fulltime')}`
+
+            console.log('check lembur')
+            if (rPresence.overtime) {
+              const getLembur = await overtime.findOne({
+                where: {
+                  overtime_status: '1',
+                  user_id: karyawan.id,
+                  [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_at'), 'YYYY-MM-DD'), {
+                    [Op.iLike]: `%${tgl.format("YYYY-MM-DD")}%`
+                  })
+                },
+              });
+              if (getLembur) {
+                let sL = rPresence.overtime_start_at != null ? moment(rPresence.overtime_start_at).format('HH:mm:ss') : "?"
+                let eL = rPresence.overtime_end_at != null ? moment(rPresence.overtime_end_at).format('HH:mm:ss') : "?"
+                detail.description += `, lembur: ${sL} - ${eL}`
+                summary.lembur = summary.lembur + 1;
+              }
+            }
+            summary.hadir = summary.hadir + 1;
+          } else {
+            if (!isAbsence) {
+              detail.description = `tidak hadir: tanpa keterangan`
+              summary.tanpa_keterangan = summary.tanpa_keterangan + 1;
+            }
+          }
+          console.log('detail', detail)
+          // report_detail.push(detail)
+        }
+        dt.push(detail)
+      }
+      return res.json({
+        "status": true,
+        "message": "success",
+        "data": dt
       })
     } catch (error) {
       console.log(error)

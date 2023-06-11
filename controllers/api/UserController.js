@@ -195,7 +195,7 @@ class UserController {
       let user_code = await GenerateUserCode(GetPrefixUserCode(account_type), lastCode)
 
       if (!profile_picture) {
-        profile_picture = 'images/default.png'
+        profile_picture = 'public/images/default.png'
       }
 
       let qRes = await user.create({
@@ -380,8 +380,8 @@ class UserController {
       if (profile_picture != "" &&
         exist.profile_picture != "" &&
         exist.profile_picture != profile_picture &&
-        exist.profile_picture != 'images/default.png') {
-        const file = `public/${exist.profile_picture}`
+        exist.profile_picture != 'public/images/default.png') {
+        const file = `${exist.profile_picture}`
         if (fs.existsSync(file)) {
           fs.unlinkSync(file)
         }
@@ -425,8 +425,8 @@ class UserController {
       })
 
       //delete picture
-      if ((exist.profile_picture != "" || exist.profile_picture) && exist.profile_picture != 'images/default.png') {
-        const file = `public/${exist.profile_picture}`
+      if ((exist.profile_picture != "" || exist.profile_picture) && exist.profile_picture != 'public/images/default.png') {
+        const file = `${exist.profile_picture}`
         if (fs.existsSync(file)) {
           fs.unlinkSync(file)
         }
@@ -899,7 +899,9 @@ class UserController {
         is_absence: false,
         have_overtime: false,
         already_overtime_started: false,
-        already_overtime_ended: false
+        already_overtime_ended: false,
+        count_karyawan_active: 0,
+        count_karyawan_inactive: 0,
       };
 
       // Cek apakah tanggal merah
@@ -995,6 +997,23 @@ class UserController {
           obj.already_overtime_ended = true
         }
       }
+
+      // Get count karyawan
+      const countKaryawanActive = await user.count({
+        where: {
+          deleted: false
+        }
+      });
+
+      obj.count_karyawan_active = countKaryawanActive;
+
+      const countKaryawanInactive = await user.count({
+        where: {
+          deleted: true
+        }
+      });
+
+      obj.count_karyawan_inactive = countKaryawanInactive;
 
       await t.commit();
 

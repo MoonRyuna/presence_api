@@ -4,7 +4,7 @@ const saltRounds = 10;
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     try {
       await queryInterface.bulkInsert('user', [
         {
@@ -19,7 +19,7 @@ module.exports = {
           address: 'Jl. Cikutra No. 1',
           description: 'Admin Ganteng',
           started_work_at: '2021-12-07',
-          profile_picture: 'images/default.png',
+          profile_picture: 'public/images/default.png',
           device_tracker: false,
           can_wfh: true,
           deleted: false,
@@ -29,7 +29,7 @@ module.exports = {
           createdAt: new Date(),
           updatedAt: new Date()
         },
-        { 
+        {
           user_code: '11.001',
           username: 'meta.violeta',
           password: await bcrypt.hash('rahasia', saltRounds),
@@ -41,7 +41,7 @@ module.exports = {
           address: 'Jl. Cikutra No. 1',
           description: 'HRD',
           started_work_at: '2018-12-07',
-          profile_picture: 'images/default.png',
+          profile_picture: 'public/images/default.png',
           device_tracker: false,
           can_wfh: true,
           deleted: false,
@@ -51,7 +51,7 @@ module.exports = {
           createdAt: new Date(),
           updatedAt: new Date()
         },
-        { 
+        {
           user_code: '12.001',
           username: 'ari',
           password: await bcrypt.hash('rahasia', saltRounds),
@@ -63,7 +63,7 @@ module.exports = {
           address: 'Jl. Rancakasiat',
           description: 'Fullstack Programmer',
           started_work_at: '2018-12-07',
-          profile_picture: 'images/default.png',
+          profile_picture: 'public/images/default.png',
           device_tracker: false,
           can_wfh: true,
           deleted: false,
@@ -73,7 +73,7 @@ module.exports = {
           createdAt: new Date(),
           updatedAt: new Date()
         },
-        { 
+        {
           user_code: '12.002',
           username: 'kinfjr',
           password: await bcrypt.hash('rahasia', saltRounds),
@@ -85,7 +85,7 @@ module.exports = {
           address: 'Cililin',
           description: 'Fullstack Programmer',
           started_work_at: '2021-03-07',
-          profile_picture: 'images/default.png',
+          profile_picture: 'public/images/default.png',
           device_tracker: false,
           can_wfh: true,
           deleted: false,
@@ -101,7 +101,7 @@ module.exports = {
     }
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete('user', null, {
       truncate: true,
     });

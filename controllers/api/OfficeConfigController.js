@@ -21,25 +21,25 @@ class OfficeConfigController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 
   async update(req, res) {
     let rules = {
-        name: 'required',
-        theme: 'required',
-        latitude: 'required',
-        longitude: 'required',
-        radius: 'required',
-        cut_off_date: 'required',
-        amount_of_annual_leave: 'required',
-        work_schedule: 'required',
-        updated_by: 'required'
+      name: 'required',
+      theme: 'required',
+      latitude: 'required',
+      longitude: 'required',
+      radius: 'required',
+      cut_off_date: 'required',
+      amount_of_annual_leave: 'required',
+      work_schedule: 'required',
+      updated_by: 'required'
     }
 
     let validation = new Validator(req.body, rules)
-    if(validation.fails()){
+    if (validation.fails()) {
       return res.status(422).json({
         status: false,
         message: 'form:is not complete',
@@ -47,24 +47,24 @@ class OfficeConfigController {
       })
     }
 
-    let { 
-        name,
-        theme,
-        logo,
-        latitude,
-        longitude,
-        radius,
-        cut_off_date,
-        amount_of_annual_leave,
-        work_schedule,
-        updated_by
+    let {
+      name,
+      theme,
+      logo,
+      latitude,
+      longitude,
+      radius,
+      cut_off_date,
+      amount_of_annual_leave,
+      work_schedule,
+      updated_by
     } = req.body
 
     let id = req.params.id
 
     const t = await sequelize.transaction();
     try {
-      if(cut_off_date < 1 || cut_off_date > 28){
+      if (cut_off_date < 1 || cut_off_date > 28) {
         return res.json({
           "status": false,
           "message": "cut_off_date:hanya boleh 1-28"
@@ -77,7 +77,7 @@ class OfficeConfigController {
         }
       })
 
-      if(!officeConfig?.id){
+      if (!officeConfig?.id) {
         return res.json({
           "status": false,
           "message": "office_config:not found"
@@ -89,15 +89,15 @@ class OfficeConfigController {
           id: updated_by,
         }
       })
-  
-      if(!oUser?.username){
+
+      if (!oUser?.username) {
         return res.json({
           "status": false,
           "message": "user:not found"
         })
       }
-      
-      const data  = {
+
+      const data = {
         name: name,
         theme: theme,
         latitude: latitude,
@@ -110,7 +110,7 @@ class OfficeConfigController {
         updatedAt: new Date()
       }
 
-      if(logo != ""){
+      if (logo != "") {
         data.logo = logo
       }
 
@@ -118,20 +118,20 @@ class OfficeConfigController {
         where: { id: id }
       })
 
-      
+
       //delete old picture
-      if(logo != "" && 
-        officeConfig.logo != "" && 
-        officeConfig.logo != logo && 
-        officeConfig.logo != 'images/default-logo.png'){ 
-        const file = `public/${officeConfig.logo}`
-        if(fs.existsSync(file)){
+      if (logo != "" &&
+        officeConfig.logo != "" &&
+        officeConfig.logo != logo &&
+        officeConfig.logo != 'images/default-logo.png') {
+        const file = `${officeConfig.logo}`
+        if (fs.existsSync(file)) {
           fs.unlinkSync(file)
         }
       }
 
-      const ndata = await office_config.findOne({where: { id: req.params.id}})
-      
+      const ndata = await office_config.findOne({ where: { id: req.params.id } })
+
       await t.commit();
       return res.json({
         "status": true,
@@ -144,7 +144,7 @@ class OfficeConfigController {
       return res.json({
         "status": false,
         "message": error.message
-      }) 
+      })
     }
   }
 }
