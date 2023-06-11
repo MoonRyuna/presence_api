@@ -1489,7 +1489,14 @@ class ReportController {
       return res.json({
         "status": true,
         "message": "success",
-        "data": dt
+        "data": {
+          "user": karyawan,
+          "date": {
+            "start_date": start_date,
+            "end_date": end_date
+          },
+          "list": dt
+        }
       })
     } catch (error) {
       console.log(error)
