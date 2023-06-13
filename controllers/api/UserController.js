@@ -1060,11 +1060,15 @@ class UserController {
       let date = req.query?.date ? req.query?.date : moment().format('YYYY-MM-DD');
       console.log("ini date", date);
 
+      let qWhere = "";
+      if (req.query?.name) qWhere = `AND u.name ILIKE '%${req.query?.name}%'`
+
       // Query untuk menghitung total data
       let countQuery = `
         select COUNT(u.id) as total  from "user" u 
         left join presence p on p.user_id =  u.id and to_char(p.check_in, 'YYYY-MM-DD') = '${date}'
         where u.account_type = 'karyawan'
+        ${qWhere}
       `;
 
       // Eksekusi query untuk menghitung total data
@@ -1079,10 +1083,11 @@ class UserController {
 
       // Query utama untuk mengambil data dengan limit dan offset
       let dataQuery = `
-        select u.id as user_id, u.name, p.check_in, p.check_out  from "user" u 
+        select u.id as user_id, u.name, u.profile_picture, p.check_in, p.check_out, p.type  from "user" u 
         left join presence p on p.user_id =  u.id and to_char(p.check_in, 'YYYY-MM-DD') = '${date}'
         where u.account_type = 'karyawan'
-        order by p.check_in DESC
+        ${qWhere}
+        order by p.check_in ASC
         limit :limit
         offset :offset
       `;
