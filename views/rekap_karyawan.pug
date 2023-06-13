@@ -46,14 +46,24 @@ html
       }
 
       .centered-text {
-        margin-top: 1rem;
         font-size: 2.6rem;
         text-align: center;
+        padding: 2.5rem;
+      }
+      .sub-text {
+        font-size: 2.6rem;
+        text-align: center;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
       }
   body
     div.centered-text
       | #{start_date} - #{end_date}
 
+    div.sub-text
+      | #{user.name}
     .grid-container
       .grid-item
         i(class='fas fa-calendar')

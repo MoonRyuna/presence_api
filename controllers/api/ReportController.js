@@ -1146,6 +1146,7 @@ class ReportController {
       }
       console.log('summary', summary)
       res.render('rekap_karyawan', {
+        user: karyawan,
         summary: summary,
         start_date: moment(start_date).format("DD/MM/YYYY"),
         end_date: moment(end_date).format("DD/MM/YYYY")

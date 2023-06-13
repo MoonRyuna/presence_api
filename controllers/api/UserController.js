@@ -1,4 +1,4 @@
-const { user, user_annual_leave, presence, absence, office_config, overtime, sequelize } = require("../../models")
+const { user, user_annual_leave, presence, absence, office_config, overtime, sequelize, submission } = require("../../models")
 const { GenerateUserCode, GetPrefixUserCode } = require('../../utils/GenerateCode')
 const Validator = require('validatorjs')
 const bcrypt = require('bcrypt')
@@ -23,6 +23,7 @@ class UserController {
       let qWhere = {}
       if (req.query.name) qWhere.name = { [Op.iLike]: `%${req.query.name}%` }
       if (req.query.user_code) qWhere.user_code = { [Op.iLike]: `%${req.query.user_code}%` }
+      if (req.query.account_type) qWhere.account_type = { [Op.iLike]: `%${req.query.account_type}%` }
       if (req.query.deleted) qWhere.deleted = req.query.deleted
 
       let qOrder = []
@@ -902,6 +903,8 @@ class UserController {
         already_overtime_ended: false,
         count_karyawan_active: 0,
         count_karyawan_inactive: 0,
+        submission_pending_absence: 0,
+        submission_pending_overtime: 0,
       };
 
       // Cek apakah tanggal merah
@@ -1015,6 +1018,25 @@ class UserController {
 
       obj.count_karyawan_inactive = countKaryawanInactive;
 
+      // count submission
+      const cAbsence = await submission.count({
+        where: {
+          submission_status: "0",
+          submission_ref_table: "absence"
+        }
+      });
+
+      obj.submission_pending_absence = cAbsence;
+
+      const cOvertime = await submission.count({
+        where: {
+          submission_status: "0",
+          submission_ref_table: "overtime"
+        }
+      });
+
+      obj.submission_pending_overtime = cOvertime;
+
       await t.commit();
 
       return res.json({
@@ -1029,6 +1051,147 @@ class UserController {
       return res.json({
         status: false,
         message: error.message,
+      });
+    }
+  }
+
+  async listMonitorKaryawan(req, res) {
+    try {
+      let date = req.query?.date ? req.query?.date : moment().format('YYYY-MM-DD');
+      console.log("ini date", date);
+
+      // Query untuk menghitung total data
+      let countQuery = `
+        select COUNT(u.id) as total  from "user" u 
+        left join presence p on p.user_id =  u.id and to_char(p.check_in, 'YYYY-MM-DD') = '${date}'
+        where u.account_type = 'karyawan'
+      `;
+
+      // Eksekusi query untuk menghitung total data
+      const countResult = await sequelize.queryInterface.sequelize.query(countQuery, {
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      const total = +countResult[0].total;
+      let current_page = +req.query.page || 1;
+      let limit = +req.query.limit || 10;
+      let offset = (current_page - 1) * limit;
+
+      // Query utama untuk mengambil data dengan limit dan offset
+      let dataQuery = `
+        select u.id as user_id, u.name, p.check_in, p.check_out  from "user" u 
+        left join presence p on p.user_id =  u.id and to_char(p.check_in, 'YYYY-MM-DD') = '${date}'
+        where u.account_type = 'karyawan'
+        order by p.check_in DESC
+        limit :limit
+        offset :offset
+      `;
+
+      // Eksekusi query untuk mengambil data dengan limit dan offset
+      const qRes = await sequelize.queryInterface.sequelize.query(dataQuery, {
+        replacements: {
+          limit,
+          offset,
+        },
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      let prev_page = (current_page > 1) ? (current_page - 1) : null;
+      let next_page = total > (current_page * limit) ? (current_page + 1) : null;
+      console.log("total", total)
+      console.log("current", (current_page * limit))
+
+      return res.json({
+        "status": true,
+        "message": "user:success",
+        "data": {
+          "total": total,
+          "current_page": current_page,
+          "next_page": next_page,
+          "prev_page": prev_page,
+          "limit": limit,
+          "result": qRes,
+        }
+      });
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
+      });
+    }
+  }
+
+  async listJatahCutiTahunan(req, res) {
+    try {
+      let user_id = req.query?.user_id ? req.query?.user_id : "";
+      console.log("ini user_id", user_id);
+
+      if (!user_id) {
+        return res.json({
+          "status": false,
+          "message": "user id tidak boleh kosong",
+        });
+      }
+
+      // Query untuk menghitung total data
+      let countQuery = `
+      select count(ual.id) as total from user_annual_leave ual 
+      inner join "user" u on u.id = ual.user_id and account_type = 'karyawan'
+      where ual.user_id  = '${user_id}'
+      `;
+
+      // Eksekusi query untuk menghitung total data
+      const countResult = await sequelize.queryInterface.sequelize.query(countQuery, {
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      const total = +countResult[0].total;
+      let current_page = +req.query.page || 1;
+      let limit = +req.query.limit || 10;
+      let offset = (current_page - 1) * limit;
+
+      // Query utama untuk mengambil data dengan limit dan offset
+      let dataQuery = `
+        select u.id as user_id, u."name", ual.year, ual.annual_leave from user_annual_leave ual 
+        inner join "user" u on u.id = ual.user_id and account_type = 'karyawan'
+        where ual.user_id  = '${user_id}'
+        order by ual.year DESC
+        limit :limit
+        offset :offset
+      `;
+
+      // Eksekusi query untuk mengambil data dengan limit dan offset
+      const qRes = await sequelize.queryInterface.sequelize.query(dataQuery, {
+        replacements: {
+          limit,
+          offset,
+        },
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      let prev_page = (current_page > 1) ? (current_page - 1) : null;
+      let next_page = total > (current_page * limit) ? (current_page + 1) : null;
+      console.log("total", total)
+      console.log("current", (current_page * limit))
+
+      return res.json({
+        "status": true,
+        "message": "user:success",
+        "data": {
+          "total": total,
+          "current_page": current_page,
+          "next_page": next_page,
+          "prev_page": prev_page,
+          "limit": limit,
+          "result": qRes,
+        }
+      });
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({
+        "status": false,
+        "message": error.message,
       });
     }
   }
