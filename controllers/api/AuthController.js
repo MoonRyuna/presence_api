@@ -265,31 +265,15 @@ class AuthController {
       let otpHtml = '<!DOCTYPE html>\n<html>\n<head>\n';
       otpHtml += '<meta charset="UTF-8">\n';
       otpHtml += '<title>PT. Digital Amore Kriyanesia</title>\n';
-      otpHtml += '<style>\n';
-      otpHtml += '.box {\n';
-      otpHtml += '    display: inline-block;\n';
-      otpHtml += '    width: 30px;\n';
-      otpHtml += '    height: 30px;\n';
-      otpHtml += '    margin: 5px;\n';
-      otpHtml += '    border: 1px solid #000;\n';
-      otpHtml += '    text-align: center;\n';
-      otpHtml += '    font-size: 20px;\n';
-      otpHtml += '    line-height: 30px;\n';
-      otpHtml += '}\n';
-      otpHtml += '</style>\n';
       otpHtml += '</head>\n<body>\n';
-      otpHtml += '<p>Silakan gunakan OTP di bawah ini:</p>\n';
-      otpHtml += '<div id="otp-container">\n';
-      for (let i = 0; i < otpArray.length; i++) {
-        otpHtml += `<div class="box">${otpArray[i]}</div>\n`;
-      }
-      otpHtml += '</div>\n';
+      otpHtml += '<p>Jangan berikan OTP ini kepada siapapun, pergunakan untuk Anda sendiri</p>\n';
+      otpHtml += '<p>' + otpStr + '</p>\n';
       otpHtml += '</body>\n</html>';
 
       mailer.prepare({
         to: email,
         subject: 'OTP untuk Ubah Password',
-        text: `Silakan gunakan OTP ${otp}`,
+        text: `Jangan berikan OTP ini kepada siapapun, pergunakan untuk Anda sendiri: ${otp}`,
         html: otpHtml
       })
       await mailer.send()
