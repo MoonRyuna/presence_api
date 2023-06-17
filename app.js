@@ -96,7 +96,7 @@ const schedule = require('node-schedule');
 const { setAnnualLeave } = require('./utils/CronCommon')
 
 // run default data
-setAnnualLeave()
+// setAnnualLeave()
 
 schedule.scheduleJob('0 0 0 1 1 *', async function () {
     console.log('cron start')
