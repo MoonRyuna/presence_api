@@ -3,7 +3,7 @@ info:
   title: PRESENCE-API
   version: 1.0.0
 servers:
-  - url: http://localhost:3000
+  - url: https://presence-api.srv.co.id/
 components:
   securitySchemes:
     noauthAuth:
@@ -34,9 +34,9 @@ paths:
             schema:
               type: object
               example:
-                username: admin
-                password: admin
-                imei: '23829300092021'
+                username: kinfjr
+                password: rahasia
+                imei: '381153570610993'
       security:
         - noauthAuth: []
       responses:
@@ -60,6 +60,65 @@ paths:
                 device_uid: x213
       security:
         - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/forgot_password:
+    post:
+      tags:
+        - AUTH
+      summary: FORGOT PASSWORD
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: kurosaki.ari.kun@gmail.com
+      security:
+        - noauthAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/verify_otp:
+    post:
+      tags:
+        - AUTH
+      summary: VERIFY OTP
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: kurosaki.ari.kun@gmail.com
+                otp: '621477'
+      security:
+        - noauthAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/change_password:
+    post:
+      tags:
+        - AUTH
+      summary: CHANGE PASSWORD
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                id: '3'
+                password: rahasia
+      security:
+        - noauthAuth: []
       responses:
         '200':
           description: Successful response
@@ -91,9 +150,9 @@ paths:
                 name: PT. Digital Amore Kriyanesia
                 theme: default
                 logo: images/default-logo.png
-                latitude: -7.01137531169352
-                longitude: 107.55235349704994
-                radius: 2
+                latitude: -7.0031342
+                longitude: 110.59322727
+                radius: 50
                 cut_off_date: 25
                 amount_of_annual_leave: 12
                 work_schedule: 08:00 - 17:00
@@ -119,12 +178,6 @@ paths:
       summary: LIST
       security:
         - bearerAuth: []
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-          example: '1'
       responses:
         '200':
           description: Successful response
@@ -143,6 +196,18 @@ paths:
                 name: sakit
                 cut_annual_leave: false
                 created_by: 1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence_type/all:
+    get:
+      tags:
+        - ABSENCE TYPE
+      summary: ALL
       security:
         - bearerAuth: []
       responses:
@@ -297,19 +362,20 @@ paths:
             schema:
               type: object
               example:
-                username: kinfjr
+                username: sodikin
                 password: rahasia
                 password_confirmation: rahasia
                 token: '-'
-                email: kinfjr@gmail.com
+                email: sodikin@gmail.com
                 account_type: karyawan
-                name: Rizky Nugraha
-                address: Cililin
-                description: full stack programmer
-                started_work_at: '2020-08-10'
-                profile_picture: images/image-1671440725752-611127637.png
+                name: Sodikin Nur Holis
+                address: Kp.Rancamanyar
+                description: Lead Dev
+                started_work_at: '2018-08-10'
+                profile_picture: ''
                 device_tracker: true
                 can_wfh: true
+                phone_number: '62836293911'
                 created_by: 1
       security:
         - bearerAuth: []
@@ -347,17 +413,19 @@ paths:
             schema:
               type: object
               example:
-                username: wow123
-                email: wow123@mail.com
+                username: ari
+                email: kurosaki.ari.kun@gmail.com
                 account_type: karyawan
-                name: Ujang Udin (edit)
-                address: Jl. Suka Suka (edit)
-                description: '- (edit)'
-                started_work_at: '2020-08-11'
-                profile_picture: images/image-1671437005045-635988428.png
+                name: Ari Ardiansyah
+                address: Jl. Rancakasiat
+                phone_number: '6283822658411'
+                description: Fullstack Programmer
+                started_work_at: '2018-12-07T00:00:00.000Z'
+                profile_picture: images/default.png
                 device_tracker: true
                 can_wfh: true
                 updated_by: 1
+                password: rahasia
       security:
         - bearerAuth: []
       parameters:
@@ -501,6 +569,94 @@ paths:
           description: Successful response
           content:
             application/json: {}
+  /api/v1/user/dashboard1:
+    post:
+      tags:
+        - USER
+      summary: DASHBOARD 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                date: '2023-04-25'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user/today_check:
+    post:
+      tags:
+        - USER
+      summary: TODAY CHECK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                date: '2023-06-10 00:00:00'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user/list/monitor_karyawan:
+    get:
+      tags:
+        - USER
+      summary: LIST MONITORING KARYAWAN
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '10'
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+        - name: date
+          in: query
+          schema:
+            type: string
+          example: '2023-06-13'
+        - name: ''
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/user/list/jatah_cuti_tahunan:
+    get:
+      tags:
+        - USER
+      summary: LIST JATAH CUTI TAHUNAN
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          example: '3'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
   /api/v1/upload/image:
     post:
       tags:
@@ -522,7 +678,7 @@ paths:
           description: Successful response
           content:
             application/json: {}
-  /api/v1/upload/attachment:
+  /api/v1/upload/document:
     post:
       tags:
         - UPLOAD
@@ -533,7 +689,7 @@ paths:
             schema:
               type: object
               properties:
-                image:
+                document:
                   type: string
                   format: binary
       security:
@@ -552,6 +708,11 @@ paths:
         - bearerAuth: []
       parameters:
         - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+        - name: limit
           in: query
           schema:
             type: integer
@@ -594,6 +755,39 @@ paths:
             type: integer
           required: true
           example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/absence/list/submission:
+    get:
+      tags:
+        - ABSENCE
+      summary: LIST SUBMISSION - ADMIN
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '10'
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+        - name: start_date
+          in: query
+          schema:
+            type: string
+          example: '2023-05-13 00:00:00'
+        - name: end_date
+          in: query
+          schema:
+            type: string
+          example: '2023-05-13 23:59:59'
       responses:
         '200':
           description: Successful response
@@ -694,6 +888,21 @@ paths:
           schema:
             type: integer
           example: '1'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '30'
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          example: '3'
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: overtime_at:desc
       responses:
         '200':
           description: Successful response
@@ -712,7 +921,7 @@ paths:
           schema:
             type: integer
           required: true
-          example: '1'
+          example: '52'
       responses:
         '200':
           description: Successful response
@@ -731,7 +940,40 @@ paths:
           schema:
             type: integer
           required: true
+          example: '57'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/overtime/list/submission:
+    get:
+      tags:
+        - OVERTIME
+      summary: LIST SUBMISSION - ADMIN
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '10'
+        - name: page
+          in: query
+          schema:
+            type: integer
           example: '1'
+        - name: start_date
+          in: query
+          schema:
+            type: string
+          example: '2023-05-31 00:00:00'
+        - name: end_date
+          in: query
+          schema:
+            type: string
+          example: '2023-05-31 23:59:00'
       responses:
         '200':
           description: Successful response
@@ -748,8 +990,8 @@ paths:
             schema:
               type: object
               example:
-                user_id: 3
-                overtime_at: '2023-03-20'
+                user_id: 4
+                overtime_at: '2023-04-28'
                 desc: Kerjaan harus dilanjut
                 attachment: ''
       security:
@@ -770,7 +1012,7 @@ paths:
             schema:
               type: object
               example:
-                overtime_id: '1'
+                overtime_id: '54'
       security:
         - bearerAuth: []
       responses:
@@ -789,7 +1031,7 @@ paths:
             schema:
               type: object
               example:
-                submission_id: 5
+                submission_id: 18
                 authorization_by: 1
       security:
         - bearerAuth: []
@@ -831,6 +1073,35 @@ paths:
           schema:
             type: integer
           example: '1'
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          example: '3'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '30'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/presence/{id}:
+    get:
+      tags:
+        - PRESENCE
+      summary: DETAIL
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          example: '5'
       responses:
         '200':
           description: Successful response
@@ -847,8 +1118,8 @@ paths:
             schema:
               type: object
               example:
-                user_id: 3
-                check_in: '2023-03-20 8:00:00'
+                user_id: 4
+                check_in: '2023-04-26 8:00:00'
                 position_check_in:
                   lat: '0'
                   lng: '0'
@@ -871,8 +1142,8 @@ paths:
             schema:
               type: object
               example:
-                user_id: 3
-                check_out: '2023-03-20 17:00:00'
+                user_id: 4
+                check_out: '2023-04-19 17:00:00'
                 position_check_out:
                   lat: '0'
                   lng: '0'
@@ -993,8 +1264,8 @@ paths:
             schema:
               type: object
               example:
-                title: Report Maret
-                month_report: '3'
+                title: Report Juni
+                month_report: '6'
                 year_report: '2023'
                 generated_by: 1
       security:
@@ -1023,7 +1294,7 @@ paths:
           schema:
             type: integer
           required: true
-          example: '1'
+          example: '2'
       responses:
         '200':
           description: Successful response
@@ -1042,7 +1313,49 @@ paths:
           schema:
             type: integer
           required: true
-          example: '1'
+          example: '2'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/report/rekap_karyawan:
+    post:
+      tags:
+        - REPORT
+      summary: REKAP KARYAWAN
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 3
+                month: '06'
+                year: '2023'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /api/v1/report/rekap_detail_karyawan:
+    post:
+      tags:
+        - REPORT
+      summary: REKAP DETAIL KARYAWAN
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                user_id: 4
+                month: '03'
+                year: '2023'
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Successful response
