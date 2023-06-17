@@ -37,11 +37,11 @@ app.response.send = function sendOverWrite(body) {
 }
 
 morgan.token('res-body', (req, res) => {
-    if(res.getHeader('Content-Type') == 'application/json; charset=utf-8'){
-        if(typeof res.resBody == 'string'){
-            return res.resBody        
-        }else{
-            return JSON.stringify(res.resBody)      
+    if (res.getHeader('Content-Type') == 'application/json; charset=utf-8') {
+        if (typeof res.resBody == 'string') {
+            return res.resBody
+        } else {
+            return JSON.stringify(res.resBody)
         }
     }
     return JSON.stringify({
@@ -50,13 +50,13 @@ morgan.token('res-body', (req, res) => {
 })
 
 morgan.token('req-body', (req, res) => {
-    if(res.getHeader('Content-Type') == 'application/json; charset=utf-8'){
-        return JSON.stringify(req.body)        
+    if (res.getHeader('Content-Type') == 'application/json; charset=utf-8') {
+        return JSON.stringify(req.body)
     }
     return null
 })
 
-let log_name = '/logs/access_log_'+moment().format('YYYY_MM_DD')+'.log';
+let log_name = '/logs/access_log_' + moment().format('YYYY_MM_DD') + '.log';
 let accessLogStream = fs.createWriteStream(path.join(__dirname, log_name), { flags: 'a' })
 app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] | @req :req-body => @res :res-body', {
     stream: accessLogStream
@@ -84,23 +84,23 @@ app.use(apiVersion, PresenceRouter)
 app.use(apiVersion, ReportRouter)
 
 app.use((error, req, res, next) => {
-  return res.json({
-    status: false,
-    message: error.message
-  })
+    return res.json({
+        status: false,
+        message: error.message
+    })
 })
 
 
 //cron
 const schedule = require('node-schedule');
-const { setAnnualLeave } = require('./utils/CronCommon') 
+const { setAnnualLeave } = require('./utils/CronCommon')
 
 // run default data
-// setAnnualLeave()
+setAnnualLeave()
 
-schedule.scheduleJob('0 0 0 1 1 *', async function(){
-  console.log('cron start')
-  setAnnualLeave()
+schedule.scheduleJob('0 0 0 1 1 *', async function () {
+    console.log('cron start')
+    setAnnualLeave()
 })
 
 module.exports = app
