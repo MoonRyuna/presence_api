@@ -15,7 +15,7 @@ module.exports = {
           logo: 'public/images/default-logo.png',
           latitude: -7.01137531169352,
           longitude: 107.55235349704994,
-          radius: 2,
+          radius: 50,
           amount_of_annual_leave: 12,
           cut_off_date: 25,
           work_schedule: '08:00 - 17:00',

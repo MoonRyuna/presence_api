@@ -253,6 +253,7 @@ class AbsenceController {
       // check tidak ada absen hari ini yang pending/approve
       const countAbsence = await absence.count({
         where: {
+          user_id: user_id,
           absence_status: { [Op.in]: ['0', '1'] },
           [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('absence_at'), 'YYYY-MM-DD'), {
             [Op.iLike]: `%${absenceAt.format("YYYY-MM-DD")}%`

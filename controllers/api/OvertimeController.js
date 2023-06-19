@@ -248,6 +248,7 @@ class OvertimeController {
       const countOvertime = await overtime.count({
         where: {
           overtime_status: { [Op.in]: ['0', '1'] },
+          user_id: user_id,
           [Op.and]: Sequelize.where(Sequelize.fn('to_char', Sequelize.col('overtime_at'), 'YYYY-MM-DD'), {
             [Op.iLike]: `%${overtimeAt.format("YYYY-MM-DD")}%`
           })
