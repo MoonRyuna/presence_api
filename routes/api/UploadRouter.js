@@ -40,6 +40,7 @@ const uploadImage = multer({
     }
   },
 })
+
 const uploadDocument = multer({
   storage: storageDocument,
   // limits: {
