@@ -13,7 +13,7 @@ class AuthController {
     let rules = {
       username: 'required|alpha_dash',
       password: 'required',
-      imei: 'required'
+      device_unique: 'required'
     }
 
     let validation = new Validator(req.body, rules)
@@ -25,22 +25,22 @@ class AuthController {
       })
     }
 
-    let { username, password, imei } = req.body
+    let { username, password, device_unique } = req.body
 
     try {
-      let imeiUsed = await user.findOne({
+      let deciveUniqueUsed = await user.findOne({
         where: {
-          imei: imei,
+          device_unique,
           [Op.and]: Sequelize.where(Sequelize.col('username'), {
             [Op.not]: username
           })
         }
       })
 
-      if (imeiUsed) {
+      if (deciveUniqueUsed) {
         return res.json({
           "status": false,
-          "message": "imei: sudah tertaut pada akun lain, silakan untuk reset imei"
+          "message": "device: sudah tertaut pada akun lain, silakan untuk reset device unique"
         })
       }
 
@@ -50,11 +50,11 @@ class AuthController {
         }
       })
 
-      if (auth?.imei) {
-        if (auth?.imei != imei) {
+      if (auth?.device_unique) {
+        if (auth?.device_unique != device_unique) {
           return res.json({
             "status": false,
-            "message": "imei: berbeda dengan terakhir kali masuk, silakan untuk reset imei"
+            "message": "device: berbeda dengan terakhir kali masuk, silakan untuk reset device unique"
           })
         }
       }
@@ -94,8 +94,8 @@ class AuthController {
       });
 
       await user.update({
-        imei: imei,
-        token: token,
+        device_unique,
+        token,
       }, {
         where: { id: auth?.id }
       })

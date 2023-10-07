@@ -36,7 +36,7 @@ paths:
               example:
                 username: kinfjr
                 password: rahasia
-                imei: '381153570610993'
+                device_unique: '381153570610993'
       security:
         - noauthAuth: []
       responses:
@@ -531,11 +531,11 @@ paths:
           description: Successful response
           content:
             application/json: {}
-  /api/v1/user/reset_imei:
+  /api/v1/user/reset_device_unique:
     post:
       tags:
         - USER
-      summary: RESET IMEI
+      summary: RESET DEVICE UNIQUE
       requestBody:
         content:
           application/json:

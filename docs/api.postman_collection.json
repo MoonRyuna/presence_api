@@ -43,7 +43,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"username\": \"kinfjr\",\r\n    \"password\": \"rahasia\",\r\n    \"imei\": \"381153570610993\"\r\n}",
+							"raw": "{\r\n    \"username\": \"kinfjr\",\r\n    \"password\": \"rahasia\",\r\n    \"device_unique\": \"381153570610993\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1097,7 +1097,7 @@
 					"response": []
 				},
 				{
-					"name": "RESET IMEI",
+					"name": "RESET DEVICE UNIQUE",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -1121,7 +1121,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/api/v1/user/reset_imei",
+							"raw": "{{base_url}}/api/v1/user/reset_device_unique",
 							"host": [
 								"{{base_url}}"
 							],
@@ -1129,7 +1129,7 @@
 								"api",
 								"v1",
 								"user",
-								"reset_imei"
+								"reset_device_unique"
 							]
 						}
 					},

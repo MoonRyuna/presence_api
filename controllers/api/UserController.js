@@ -623,7 +623,7 @@ class UserController {
     }
   }
 
-  async resetImei(req, res) {
+  async resetDeviceUnique(req, res) {
     let rules = {
       user_id: 'required',
     }
@@ -655,7 +655,7 @@ class UserController {
       })
 
       await user.update({
-        imei: null
+        device_unique: null
       }, {
         where: {
           id: user_id
@@ -667,7 +667,7 @@ class UserController {
       await t.commit();
       return res.json({
         "status": true,
-        "message": "imei:telah di reset",
+        "message": "device_unique:telah di reset",
         "data": data
       })
     } catch (error) {

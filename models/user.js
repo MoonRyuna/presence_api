@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
     started_work_at: DataTypes.DATE,
     profile_picture: DataTypes.TEXT,
     device_tracker: DataTypes.BOOLEAN,
-    imei: DataTypes.TEXT,
+    device_unique: DataTypes.TEXT,
     device_uid: DataTypes.TEXT,
     can_wfh: DataTypes.BOOLEAN,
     otp: DataTypes.TEXT,
